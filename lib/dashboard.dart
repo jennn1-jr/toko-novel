@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tokonovel/book_detail_page.dart';
+import 'package:tokonovel/about_page.dart';
+import 'package:tokonovel/cart_page.dart'; // Import the CartPage
 
 void main() {
   runApp(const NovelKuApp());
@@ -668,6 +671,17 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       _selectedIndex = index;
     });
+    if (index == 2) { // 'Keranjang' is at index 2
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CartPage()),
+      );
+    } else if (index == 3) { // 'About' is at index 3
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AboutUsPage()),
+      );
+    }
   }
 
   @override
@@ -1029,7 +1043,9 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildNavItem(String title, int index) {
     final isSelected = _selectedIndex == index;
     return GestureDetector(
-      onTap: () => _onNavItemTapped(index),
+      onTap: () {
+        _onNavItemTapped(index);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
@@ -1164,7 +1180,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
               OutlinedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const BookDetailPage()),
+                  );
+                },
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFD4A574), width: 1.5),
                   foregroundColor: const Color(0xFFD4A574),
