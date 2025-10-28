@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "33210290917",
+    "project_id": "toko-novel",
+    "storage_bucket": "toko-novel.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:33210290917:android:a730d86526ba9412acfa0c",
+        "android_client_info": {
+          "package_name": "com.example.tokonovel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAxxNKqazIgAm_b5Sk4Jjfn3ArlkcvZPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
