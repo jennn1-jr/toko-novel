@@ -24,7 +24,7 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isPaused = false;
   String _userName = "User"; // Default name
 
-  final List<Book> books = [
+  final List<Book> _allBooks = [
     Book(
       title: "Harry Potter",
       author: "by J. K. Rowling",
@@ -107,6 +107,8 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
   ];
 
+  List<Book> _filteredBooks = []; // List to hold filtered books
+
   final List<Category> categories = [
     Category(name: "All", icon: Icons.apps),
     Category(name: "Romance", icon: Icons.favorite),
@@ -119,8 +121,10 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    _filteredBooks = List.from(_allBooks); // Initialize filtered books with all books
     _startAutoScroll();
     _loadUserName();
+    _searchController.addListener(_filterBooks); // Add listener for search input
   }
 
   void _loadUserName() {
@@ -132,12 +136,31 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  void _filterBooks() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredBooks = List.from(_allBooks);
+      } else {
+        _filteredBooks = _allBooks.where((book) {
+          return book.title.toLowerCase().contains(query) ||
+                 book.author.toLowerCase().contains(query);
+        }).toList();
+      }
+      // Reset page controller if filtered list changes significantly
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(0);
+      }
+      _currentPage = 0;
+    });
+  }
+
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!_isPaused && _pageController.hasClients) {
+      if (!_isPaused && _pageController.hasClients && _filteredBooks.isNotEmpty) {
         int prevPage = _currentPage - 1;
         if (prevPage < 0) {
-          prevPage = books.length - 1;
+          prevPage = _filteredBooks.length - 1;
         }
         _pageController.animateToPage(
           prevPage,
@@ -153,6 +176,7 @@ class _DashboardPageState extends State<DashboardPage> {
     _autoScrollTimer?.cancel();
     _scrollController.dispose();
     _pageController.dispose();
+    _searchController.removeListener(_filterBooks); // Remove listener
     _searchController.dispose();
     super.dispose();
   }
@@ -198,7 +222,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: isDarkMode ? Colors.black : Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1), // Deprecated
+                        color: Colors.black.withAlpha(int.parse((0.1 * 255).round().toString())), // Replaced withOpacity
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -295,7 +319,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
                             borderRadius: BorderRadius.circular(25),
                             border: Border.all(
-                              color: const Color(0xFFD4AF37).withOpacity(0.3), // Deprecated
+                              color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
                               width: 1.5,
                             ),
                           ),
@@ -334,7 +358,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFD4AF37).withOpacity(0.3), // Deprecated
+                            color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
                             width: 1.5,
                           ),
                         ),
@@ -380,12 +404,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: const Color(0xFFD4AF37).withOpacity(0.2), // Deprecated
+                      color: const Color(0xFFD4AF37).withAlpha(int.parse((0.2 * 255).round().toString())), // Replaced withOpacity
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withOpacity(0.1), // Deprecated
+                        color: const Color(0xFFD4AF37).withAlpha(int.parse((0.1 * 255).round().toString())), // Replaced withOpacity
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -428,7 +452,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withOpacity(0.4), // Deprecated
+                              color: const Color(0xFFD4AF37).withAlpha(int.parse((0.4 * 255).round().toString())), // Replaced withOpacity
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -517,7 +541,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       onPageChanged: (index) {
                         setState(() => _currentPage = index);
                       },
-                      itemCount: books.length,
+                      itemCount: _filteredBooks.length, // Use filtered books
                       itemBuilder: (context, index) {
                         return AnimatedBuilder(
                           animation: _pageController,
@@ -537,7 +561,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                             );
                           },
-                          child: BookCard(book: books[index], isDarkMode: isDarkMode),
+                          child: BookCard(book: _filteredBooks[index], isDarkMode: isDarkMode), // Use filtered books
                         );
                       },
                     ),
@@ -551,7 +575,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
-                      books.length,
+                      _filteredBooks.length, // Use filtered books
                           (index) => AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -568,7 +592,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           boxShadow: _currentPage == index
                               ? [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withOpacity(0.5), // Deprecated
+                              color: const Color(0xFFD4AF37).withAlpha(int.parse((0.5 * 255).round().toString())), // Replaced withOpacity
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -649,7 +673,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF1B5E20).withOpacity(0.4), // Deprecated
+                          color: const Color(0xFF1B5E20).withAlpha(int.parse((0.4 * 255).round().toString())), // Replaced withOpacity
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -660,7 +684,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2), // Deprecated
+                            color: Colors.white.withAlpha(int.parse((0.2 * 255).round().toString())), // Replaced withOpacity
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.local_offer, size: 56, color: Colors.white),
@@ -704,7 +728,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFD4AF37).withOpacity(0.5), // Deprecated
+                                color: const Color(0xFFD4AF37).withAlpha(int.parse((0.5 * 255).round().toString())), // Replaced withOpacity
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -819,12 +843,12 @@ class BookCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withOpacity(0.3), // Deprecated
+          color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2), // Deprecated
+            color: Colors.black.withAlpha(int.parse((0.2 * 255).round().toString())), // Replaced withOpacity
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -879,7 +903,7 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3), // Deprecated
+                            color: Colors.black.withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -958,7 +982,7 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD4AF37).withOpacity(0.4), // Deprecated
+                            color: const Color(0xFFD4AF37).withAlpha(int.parse((0.4 * 255).round().toString())), // Replaced withOpacity
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -1036,12 +1060,12 @@ class CategoryCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withOpacity(0.3), // Deprecated
+          color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Deprecated
+            color: Colors.black.withAlpha(int.parse((0.1 * 255).round().toString())), // Replaced withOpacity
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1064,7 +1088,7 @@ class CategoryCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD4AF37).withOpacity(0.3), // Deprecated
+                      color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
