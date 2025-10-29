@@ -1,22 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tokonovel/book_detail_page.dart';
 import 'package:tokonovel/about_page.dart';
 import 'package:tokonovel/cart_page.dart';
-import 'package:tokonovel/cart_page.dart';
 import 'package:tokonovel/models/user_models.dart';
 import 'package:tokonovel/profile_page.dart';
-import 'package:tokonovel/services/firestore_service.dart'; // Import the CartPage
+import 'package:tokonovel/services/firestore_service.dart';
 
-
-// 2. PINDAHKAN ATAU DEFINISIKAN ULANG CLASS NOVEL DI FILE INI
+// ===== MODEL Novel yang cocok dengan Firestore =====
 class Novel {
   final String title;
   final String author;
-  final String image;
-  final double rating;
-  final int voters;
-  final String description;
+  final String image;       // kita isi emoji / placeholder
+  final double rating;      // rata-rata rating
+  final int voters;         // total orang yang rating
+  final String description; // sinopsis / deskripsi
 
   Novel({
     required this.title,
@@ -26,9 +25,48 @@ class Novel {
     required this.voters,
     required this.description,
   });
+
+  // Factory: build Novel dari dokumen Firestore
+  factory Novel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+
+    // ambil list ratings dari Firestore
+    final List<dynamic> ratingsList = (data['ratings'] ?? []) as List<dynamic>;
+
+    // hitung total voters
+    final voters = ratingsList.length;
+
+    // hitung rata-rata rating
+    double avgRating = 0.0;
+    if (voters > 0) {
+      double sum = 0.0;
+      for (final r in ratingsList) {
+        // r adalah Map { user_id, rating, created_at }
+        if (r is Map && r['rating'] != null) {
+          final val = r['rating'];
+          if (val is num) sum += val.toDouble();
+        }
+      }
+      avgRating = sum / voters;
+    }
+
+    // placeholder cover emoji biar UI kamu tetap lucu
+    // kamu bisa nanti ganti jadi URL cover (imageUrl) dari Firestore kalau ada
+    final placeholderEmoji = "📘";
+
+    return Novel(
+      title: data['title'] ?? 'Tanpa Judul',
+      author: (data['author'] != null && data['author']['name'] != null)
+          ? data['author']['name']
+          : 'Unknown Author',
+      image: placeholderEmoji,
+      rating: avgRating,
+      voters: voters,
+      description: data['description'] ?? '',
+    );
+  }
 }
 
-// 3. KODE DASHBOARD PAGE ANDA (TIDAK PERLU DIUBAH, HANYA PASTE ULANG)
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
 
@@ -38,58 +76,55 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _searchController = TextEditingController();
-  final FirestoreService _firestoreService = FirestoreService(); // Tambahkan instance service
   int _selectedIndex = 0;
 
-  // Daftar novel asli yang tidak akan berubah
-  final List<Novel> bestSellers = [
-    Novel(
-      title: "Harry Potter and the Sorcerer's Stone",
-      author: "J. K. Rowling",
-      image: "🧙",
-      rating: 4.8,
-      voters: 2967,
-      description:
-          "Masuki dunia sihir penuh petualangan dan misteri bersama Harry Potter di novel fantasi legendaris karya J.K. Rowling ini.",
-    ),
-    Novel(
-      title: "Solo Leveling",
-      author: "Chugong",
-      image: "⚔️",
-      rating: 4.9,
-      voters: 1594,
-      description:
-          "Petualangan Sung Jin-Woo naik level dari terkemah menjadi terkuat dalam dunia penuh monster dan gerbang misterius.",
-    ),
-    Novel(
-      title: "Laskar Pelangi",
-      author: "Andrea Hirata",
-      image: "🌈",
-      rating: 4.7,
-      voters: 1987,
-      description:
-          "Kisah inspiratif anak-anak Belitong yang penuh semangat, mimpi besar, dan perjuangan menghadapi keterbatasan pendidikan.",
-    ),
-  ];
+  // semua novel dari Firestore
+  List<Novel> _allNovels = [];
 
-  // Daftar novel yang akan ditampilkan di UI (hasil filter)
+  // novel yang ditampilkan setelah filter search
   List<Novel> _filteredNovels = [];
+
+  // Firestore service instance untuk mendapatkan stream profile user
+  final FirestoreService _firestoreService = FirestoreService();
+
+  bool _loading = true;
+  String? _errorMsg;
 
   @override
   void initState() {
     super.initState();
-    // Saat halaman pertama kali dibuka, tampilkan semua novel
-    _filteredNovels = bestSellers;
-    // Tambahkan listener untuk mendeteksi perubahan teks pada search bar
     _searchController.addListener(_filterNovels);
+    _loadNovelsFromFirestore();
   }
 
-  // Fungsi untuk memfilter novel berdasarkan input pencarian
+  Future<void> _loadNovelsFromFirestore() async {
+    try {
+      // ambil semua dokumen di koleksi 'novels'
+      final snap = await FirebaseFirestore.instance
+          .collection('novels')
+          .get(); // sekali fetch
+
+      final novels = snap.docs.map((doc) {
+        return Novel.fromFirestore(doc);
+      }).toList();
+
+      setState(() {
+        _allNovels = novels;
+        _filteredNovels = novels; // default tampil semua
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMsg = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
   void _filterNovels() {
-    String query = _searchController.text.toLowerCase();
+    final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredNovels = bestSellers.where((novel) {
-        // Cek apakah judul novel mengandung teks yang dicari (case-insensitive)
+      _filteredNovels = _allNovels.where((novel) {
         return novel.title.toLowerCase().contains(query);
       }).toList();
     });
@@ -97,7 +132,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   void dispose() {
-    // Hapus listener untuk mencegah memory leak
     _searchController.removeListener(_filterNovels);
     _searchController.dispose();
     super.dispose();
@@ -113,7 +147,6 @@ class _DashboardPageState extends State<DashboardPage> {
         MaterialPageRoute(builder: (context) => const CartPage()),
       );
     } else if (index == 3) {
-      // 'About' is at index 3
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AboutUsPage()),
@@ -121,89 +154,112 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF5F5F5),
-    body: CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          backgroundColor: Colors.black, // Pastikan ada background color atau styling lain
-          pinned: true,
-          expandedHeight: 0, // Sesuaikan jika perlu
-          toolbarHeight: 70,
-          automaticallyImplyLeading: false, // Menghilangkan tombol back default
-          flexibleSpace: SafeArea(
-            child: Padding(
-              // ===== PERBAIKAN DI SINI =====
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Tambahkan parameter padding
-              // =============================
-              child: Row(
-                children: [
-                  // ... (Logo) ...
-                  Row(
-                    children: [
-                      Icon(Icons.menu_book, color: Colors.white, size: 28),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'NOVELKU',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 40),
+  @override
+  Widget build(BuildContext context) {
+    // STATE HANDLING ATAS (loading / error)
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF1E1E1E),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFD4A574)),
+        ),
+      );
+    }
 
-                  // Navigation Menu
-                  Expanded(
-                    child: Row(
+    if (_errorMsg != null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF1E1E1E),
+        body: Center(
+          child: Text(
+            'Gagal load data: $_errorMsg',
+            style: const TextStyle(color: Colors.redAccent),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: CustomScrollView(
+        slivers: [
+          // =================== APP BAR ===================
+          SliverAppBar(
+            backgroundColor: Colors.black,
+            pinned: true,
+            expandedHeight: 0,
+            toolbarHeight: 70,
+            automaticallyImplyLeading: false,
+            flexibleSpace: SafeArea(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  children: [
+                    // Logo + Brand
+                    Row(
                       children: [
-                        _buildNavItem('Home', 0),
-                        _buildNavItem('Koleksi', 1),
-                        _buildNavItem('Keranjang', 2),
-                        _buildNavItem('About', 3),
+                        const Icon(Icons.menu_book,
+                            color: Colors.white, size: 28),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'NOVELKU',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       ],
                     ),
-                  ),
+                    const SizedBox(width: 40),
 
-                  // Search Bar
-                  Container(
-                    width: 250,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A2A),
-                      borderRadius: BorderRadius.circular(20),
+                    // Navigation Menu
+                    Expanded(
+                      child: Row(
+                        children: [
+                          _buildNavItem('Home', 0),
+                          _buildNavItem('Koleksi', 1),
+                          _buildNavItem('Keranjang', 2),
+                          _buildNavItem('About', 3),
+                        ],
+                      ),
                     ),
-                    child: TextField(
-                      controller: _searchController, // Pastikan _searchController didefinisikan di state
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Cari novel...',
-                        hintStyle: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10, // Sesuaikan padding vertikal agar teks di tengah
-                        ),
-                        suffixIcon: Icon(
-                          Icons.search,
-                          color: Colors.grey[500],
-                          size: 20,
+
+                    // Search Bar
+                    Container(
+                      width: 250,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Cari novel...',
+                          hintStyle: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          suffixIcon: Icon(
+                            Icons.search,
+                            color: Colors.grey[500],
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 20),
+                    const SizedBox(width: 20),
 
-                  // User Profile (buat jadi GestureDetector)
-GestureDetector(
+                    // User Profile Button
+                    GestureDetector(
   onTap: () {
     Navigator.push(
       context,
@@ -264,24 +320,27 @@ GestureDetector(
           );
         },
       ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
 
-          // Hero Section
+          // =================== HERO SECTION ===================
           SliverToBoxAdapter(
             child: Container(
               height: 350,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [const Color(0xFF3A3A3A), const Color(0xFF2A2A2A)],
+                  colors: [
+                    Color(0xFF3A3A3A),
+                    Color(0xFF2A2A2A),
+                  ],
                 ),
               ),
               child: Center(
@@ -299,11 +358,18 @@ GestureDetector(
                     const SizedBox(height: 16),
                     Text(
                       'Temukan ribuan novel menarik, dari best seller hingga digital original!',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 18,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        // nanti diarahkan ke Koleksi (index 1)
+                        _onNavItemTapped(1);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD4A574),
                         foregroundColor: Colors.black,
@@ -329,7 +395,7 @@ GestureDetector(
             ),
           ),
 
-          // Best Seller Section
+          // =================== BEST SELLER SECTION ===================
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(40),
@@ -345,14 +411,13 @@ GestureDetector(
                   ),
                   const SizedBox(height: 40),
 
-                  // Novel Cards
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    // *** PERUBAHAN DI SINI ***
-                    // Tampilkan novel dari _filteredNovels, bukan bestSellers
+                  // Grid/Row daftar novel dari Firestore (sudah terfilter)
+                  Wrap(
+                    alignment: WrapAlignment.center,
                     children: _filteredNovels
-                        .map((novel) => Flexible(child: _buildNovelCard(novel)))
+                        .map(
+                          (novel) => _buildNovelCard(novel),
+                        )
                         .toList(),
                   ),
                 ],
@@ -360,10 +425,11 @@ GestureDetector(
             ),
           ),
 
-          // Categories Section (Sisa kode sama)
+          // =================== CATEGORIES SECTION ===================
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
               child: Column(
                 children: [
                   const SizedBox(height: 20),
@@ -383,7 +449,7 @@ GestureDetector(
             ),
           ),
 
-          // Special Promo Section (Sisa kode sama)
+          // =================== PROMO SECTION (STATIC) ===================
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(40),
@@ -407,12 +473,12 @@ GestureDetector(
                       width: 140,
                       height: 200,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            const Color(0xFF2D5F3F),
-                            const Color(0xFF1A3D2A),
+                            Color(0xFF2D5F3F),
+                            Color(0xFF1A3D2A),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -531,14 +597,14 @@ GestureDetector(
             ),
           ),
 
-          // Footer Spacing
           const SliverToBoxAdapter(child: SizedBox(height: 60)),
         ],
       ),
     );
   }
 
-  // Helper Widgets (tidak ada perubahan di sini)
+  // =================== Helper Widgets ===================
+
   Widget _buildNavItem(String title, int index) {
     final isSelected = _selectedIndex == index;
     return GestureDetector(
@@ -562,7 +628,7 @@ GestureDetector(
   Widget _buildNovelCard(Novel novel) {
     return Container(
       width: 320,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -616,7 +682,8 @@ GestureDetector(
                     const SizedBox(height: 4),
                     Text(
                       'by ${novel.author}',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 12),
 
@@ -624,6 +691,7 @@ GestureDetector(
                     Row(
                       children: [
                         ...List.generate(5, (index) {
+                          // index: 0..4
                           if (index < novel.rating.floor()) {
                             return const Icon(
                               Icons.star,
@@ -706,7 +774,8 @@ GestureDetector(
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD4A574), width: 1.5),
+                  side: const BorderSide(
+                      color: Color(0xFFD4A574), width: 1.5),
                   foregroundColor: const Color(0xFFD4A574),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -718,7 +787,8 @@ GestureDetector(
                 ),
                 child: const Text(
                   'See The Book',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
