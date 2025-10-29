@@ -45,36 +45,36 @@ class AboutUsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<TeamMember> teamMembers = [
       TeamMember(
-        name: 'Arifin Muftie',
+        name: 'Jenar Aditiya Bagaskara',
         role: 'Leader',
         imageUrl: 'https://i.pravatar.cc/150?img=1',
         instagram: '@arifmuftie',
         github: 'arifmuftie',
       ),
       TeamMember(
-        name: 'Dimas Yoga',
+        name: 'Ello Adrian Hariyadi',
         role: 'Anggota',
         imageUrl: 'https://i.pravatar.cc/150?img=2',
         instagram: '@dimsyog',
         github: 'dimsyog',
       ),
       TeamMember(
-        name: 'Yoga Pratama',
+        name: 'Izora Elverda',
         role: 'Anggota',
         imageUrl: 'https://i.pravatar.cc/150?img=3',
         instagram: '@yogaprtma',
         github: 'yogaprtma',
       ),
       TeamMember(
-        name: 'Farhan Kurnia',
+        name: 'Muhammad Dwi Saputri',
         role: 'Anggota',
         imageUrl: 'https://i.pravatar.cc/150?img=4',
         instagram: '@farhankrn',
         github: 'farhankrn',
       ),
       TeamMember(
-        name: 'Dr. Nanik Suciati',
-        role: 'Dosen Pembimbing',
+        name: 'Muhammad Dzacky M.Y',
+        role: 'Anggota',
         imageUrl: 'https://i.pravatar.cc/150?img=5',
         instagram: '@naniksuciati',
         github: 'naniksuciati',
