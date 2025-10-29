@@ -1,18 +1,12 @@
-<<<<<<< HEAD
-// 1. TAMBAHKAN SEMUA IMPORT YANG DIBUTUHKAN DI SINI
-import 'package:flutter/material.dart';
-import 'package:tokonovel/about_page.dart'; // Pastikan path ini benar
-import 'package:tokonovel/book_detail_page.dart'; // Pastikan path ini benar
-import 'package:tokonovel/cart_page.dart'; // Pastikan path ini benar
-=======
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tokonovel/book_detail_page.dart';
 import 'package:tokonovel/about_page.dart';
 import 'package:tokonovel/cart_page.dart';
 import 'package:tokonovel/cart_page.dart';
-import 'package:tokonovel/profile_page.dart'; // Import the CartPage
->>>>>>> 7f2187507c7f3b068b8a69f103f5454ea687128e
+import 'package:tokonovel/models/user_models.dart';
+import 'package:tokonovel/profile_page.dart';
+import 'package:tokonovel/services/firestore_service.dart'; // Import the CartPage
 
 
 // 2. PINDAHKAN ATAU DEFINISIKAN ULANG CLASS NOVEL DI FILE INI
@@ -44,6 +38,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _searchController = TextEditingController();
+  final FirestoreService _firestoreService = FirestoreService(); // Tambahkan instance service
   int _selectedIndex = 0;
 
   // Daftar novel asli yang tidak akan berubah
@@ -183,36 +178,6 @@ Widget build(BuildContext context) {
                       color: const Color(0xFF2A2A2A),
                       borderRadius: BorderRadius.circular(20),
                     ),
-<<<<<<< HEAD
-
-                    // Search Bar
-                    Container(
-                      width: 250,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: TextField(
-                        controller: _searchController, // Controller sudah ada
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'Cari novel...',
-                          hintStyle: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 14,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          suffixIcon: Icon(
-                            Icons.search,
-                            color: Colors.grey[500],
-                            size: 20,
-                          ),
-=======
                     child: TextField(
                       controller: _searchController, // Pastikan _searchController didefinisikan di state
                       style: const TextStyle(color: Colors.white),
@@ -231,7 +196,6 @@ Widget build(BuildContext context) {
                           Icons.search,
                           color: Colors.grey[500],
                           size: 20,
->>>>>>> 7f2187507c7f3b068b8a69f103f5454ea687128e
                         ),
                       ),
                     ),
@@ -239,34 +203,67 @@ Widget build(BuildContext context) {
                   const SizedBox(width: 20),
 
                   // User Profile (buat jadi GestureDetector)
-                  GestureDetector( // Dibungkus GestureDetector
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ProfilePage()), // Navigasi ke ProfilePage
-                      );
-                    },
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: const Color(0xFF2A2A2A),
-                          radius: 18,
-                          child: Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Ambil nama user dari FirebaseAuth atau Firestore jika perlu
-                        // Untuk sementara:
-                        Text(
-                          FirebaseAuth.instance.currentUser?.displayName ??
-                          FirebaseAuth.instance.currentUser?.email?.split('@')[0] ?? // Ambil bagian sebelum @ jika display name null
-                          'User',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
-                          overflow: TextOverflow.ellipsis, // Cegah nama terlalu panjang
-                        ),
+GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ProfilePage()),
+    );
+  },
+  child: Row(
+    children: [
+      // ===== CircleAvatar DIKEMBALIKAN DI SINI =====
+      CircleAvatar(
+        backgroundColor: const Color(0xFF2A2A2A),
+        radius: 18,
+        child: Icon(
+          Icons.person,
+          color: Colors.white,
+          size: 20,
+        ),
+      ),
+      // ===========================================
+      const SizedBox(width: 8),
+      // StreamBuilder untuk menampilkan nama (Kode ini sudah benar)
+      StreamBuilder<UserProfile?>(
+        stream: _firestoreService.getUserProfileStream(),
+        builder: (context, snapshot) {
+          // Handle state Menunggu (Waiting)
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Text(
+              FirebaseAuth.instance.currentUser?.email?.split('@')[0] ?? 'Loading...',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+              overflow: TextOverflow.ellipsis,
+            );
+          }
+
+          // Handle jika ada Error
+          if (snapshot.hasError) {
+             return Text(
+               'Error',
+               style: TextStyle(color: Colors.red, fontSize: 14),
+               overflow: TextOverflow.ellipsis,
+             );
+          }
+
+          // Handle jika data Aktif dan Ada
+          String displayName = 'User';
+          if (snapshot.connectionState == ConnectionState.active && snapshot.hasData && snapshot.data != null) {
+            displayName = snapshot.data!.name.isNotEmpty
+                ? snapshot.data!.name
+                : (FirebaseAuth.instance.currentUser?.email?.split('@')[0] ?? 'User');
+          } else if (FirebaseAuth.instance.currentUser != null) {
+             displayName = FirebaseAuth.instance.currentUser!.displayName ?? FirebaseAuth.instance.currentUser!.email?.split('@')[0] ?? 'User';
+          }
+
+          // Tampilkan nama yang sudah didapat
+          return Text(
+            displayName,
+            style: TextStyle(color: Colors.white, fontSize: 14),
+            overflow: TextOverflow.ellipsis,
+          );
+        },
+      ),
                       ],
                     ),
                   ),
