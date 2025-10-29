@@ -115,10 +115,10 @@ class _LoginPageState extends State<LoginPage> {
                       vertical: 50,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20.0),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.white.withOpacity(0.3),
                         width: 1,
                       ),
                     ),
@@ -143,13 +143,13 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 30),
                         _buildTextField(
                           controller: _emailController,
-                          hintText: 'Email',
+                          hintText: 'Masukan Email',
                           enabled: !_isLoading,
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
                           controller: _passwordController,
-                          hintText: 'Password',
+                          hintText: 'Masukan Password',
                           obscureText: _obscurePassword,
                           enabled: !_isLoading,
                           suffixIcon: IconButton(
@@ -175,10 +175,10 @@ class _LoginPageState extends State<LoginPage> {
                             onPressed: _isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFc19759),
-                              disabledBackgroundColor: const Color(
-                                0xFFc19759,
-                              ).withValues(alpha: 0.5),
-                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              disabledBackgroundColor:
+                                  const Color(0xFFc19759).withOpacity(0.5),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(100),
                               ),
@@ -244,10 +244,10 @@ class _LoginPageState extends State<LoginPage> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.2),
+                              color: Colors.red.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.red.withValues(alpha: 0.5),
+                                color: Colors.red.withOpacity(0.5),
                               ),
                             ),
                             child: Text(
@@ -272,9 +272,10 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Perubahan di helper widget di bawah
   Widget _buildTextField({
     required TextEditingController controller,
-    required String hintText,
+    required String hintText, // Nama parameter tetap hintText
     bool obscureText = false,
     Widget? suffixIcon,
     bool enabled = true,
@@ -285,29 +286,51 @@ class _LoginPageState extends State<LoginPage> {
       enabled: enabled,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(color: Color(0xFFddd)),
+        // *** PERUBAHAN DI SINI ***
+        labelText: hintText, // Menggunakan labelText
+        labelStyle: const TextStyle(
+          color: Colors.white70, // Warna label saat di dalam
+          fontSize: 16,
+        ),
+        // *** AKHIR PERUBAHAN ***
+
         contentPadding: const EdgeInsets.symmetric(
           vertical: 15,
           horizontal: 20,
         ),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.25),
-        border: OutlineInputBorder(
+        fillColor: Colors.white.withOpacity(0.25),
+
+        // Border saat field aktif (tapi tidak di-klik)
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(
+              color: Colors.white.withOpacity(0.3)), // Border tipis
         ),
+
+        // Border saat di-klik (fokus)
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
           borderSide: BorderSide(
-            color: Colors.white.withValues(alpha: 0.5),
-            width: 1,
+            color: Colors.white.withOpacity(0.8), // Border lebih jelas
+            width: 1.5,
           ),
         ),
+
+        // Border saat nonaktif
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
-          borderSide: BorderSide.none,
+          borderSide:
+              BorderSide(color: Colors.white.withOpacity(0.2)), // Border tipis
         ),
+
+        // Fallback border
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(50),
+          borderSide: BorderSide(
+              color: Colors.white.withOpacity(0.3)), // Border tipis
+        ),
+
         suffixIcon: suffixIcon,
       ),
     );
@@ -447,10 +470,10 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                       vertical: 50,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20.0),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.white.withOpacity(0.3),
                         width: 1,
                       ),
                     ),
@@ -484,13 +507,13 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                         const SizedBox(height: 30),
                         _buildTextField(
                           controller: _emailController,
-                          hintText: 'Email',
+                          hintText: 'Masukan Gmail',
                           enabled: !_isLoading,
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
                           controller: _passwordController,
-                          hintText: 'Password',
+                          hintText: 'Masukan Password',
                           obscureText: _obscurePassword,
                           enabled: !_isLoading,
                           suffixIcon: IconButton(
@@ -538,10 +561,10 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                             onPressed: _isLoading ? null : _register,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFc19759),
-                              disabledBackgroundColor: const Color(
-                                0xFFc19759,
-                              ).withValues(alpha: 0.5),
-                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              disabledBackgroundColor:
+                                  const Color(0xFFc19759).withOpacity(0.5),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(100),
                               ),
@@ -601,10 +624,10 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.2),
+                              color: Colors.red.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.red.withValues(alpha: 0.5),
+                                color: Colors.red.withOpacity(0.5),
                               ),
                             ),
                             child: Text(
@@ -629,9 +652,10 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
     );
   }
 
+  // Perubahan di helper widget di bawah
   Widget _buildTextField({
     required TextEditingController controller,
-    required String hintText,
+    required String hintText, // Nama parameter tetap hintText
     bool obscureText = false,
     Widget? suffixIcon,
     bool enabled = true,
@@ -642,31 +666,54 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
       enabled: enabled,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(color: Color(0xFFddd)),
+        // *** PERUBAHAN DI SINI ***
+        labelText: hintText, // Menggunakan labelText
+        labelStyle: const TextStyle(
+          color: Colors.white70, // Warna label saat di dalam
+          fontSize: 16,
+        ),
+        // *** AKHIR PERUBAHAN ***
+
         contentPadding: const EdgeInsets.symmetric(
           vertical: 15,
           horizontal: 20,
         ),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.25),
-        border: OutlineInputBorder(
+        fillColor: Colors.white.withOpacity(0.25),
+
+        // Border saat field aktif (tapi tidak di-klik)
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(
+              color: Colors.white.withOpacity(0.3)), // Border tipis
         ),
+
+        // Border saat di-klik (fokus)
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
           borderSide: BorderSide(
-            color: Colors.white.withValues(alpha: 0.5),
-            width: 1,
+            color: Colors.white.withOpacity(0.8), // Border lebih jelas
+            width: 1.5,
           ),
         ),
+
+        // Border saat nonaktif
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
-          borderSide: BorderSide.none,
+          borderSide:
+              BorderSide(color: Colors.white.withOpacity(0.2)), // Border tipis
         ),
+
+        // Fallback border
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(50),
+          borderSide: BorderSide(
+              color: Colors.white.withOpacity(0.3)), // Border tipis
+        ),
+
         suffixIcon: suffixIcon,
       ),
     );
   }
 }
+
