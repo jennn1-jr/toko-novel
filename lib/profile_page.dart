@@ -44,6 +44,14 @@ class _ProfilePageState extends State<ProfilePage> {
           bio: _bioController.text.trim(),
         );
         await _firestoreService.setUserProfile(updatedProfile);
+
+        // Update display name in FirebaseAuth
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await user.updateDisplayName(_nameController.text.trim());
+          await user.reload(); // Reload user to get the updated info
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profil berhasil diperbarui'), backgroundColor: Colors.green),
         );

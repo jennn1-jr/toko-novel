@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokonovel/theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'Book Detail',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
       ),
       home: const BookDetailPage(),
       debugShowCheckedModeBanner: false,
@@ -21,263 +22,659 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class BookDetailPage extends StatelessWidget {
+class BookDetailPage extends StatefulWidget {
   const BookDetailPage({Key? key}) : super(key: key);
 
   @override
+  State<BookDetailPage> createState() => _BookDetailPageState();
+}
+
+class _BookDetailPageState extends State<BookDetailPage> {
+  bool isFavorite = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share, color: Colors.black),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Book Cover Section
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 180,
-                      height: 260,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+    return ValueListenableBuilder<Color>(
+      valueListenable: backgroundColorNotifier,
+      builder: (context, backgroundColor, child) {
+        final isDarkMode = backgroundColor == const Color(0xFF1A1A1A);
+
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          body: CustomScrollView(
+            slivers: [
+              // Custom App Bar
+              SliverAppBar(
+                backgroundColor: isDarkMode ? Colors.black : Colors.white,
+                elevation: 0,
+                pinned: true,
+                expandedHeight: 0,
+                toolbarHeight: 70,
+                leading: Container(
+                  margin: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37).withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+                actions: [
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37).withOpacity(0.3),
+                        width: 1.5,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          'https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?w=400',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[300],
-                              child: const Center(
-                                child: Icon(Icons.book, size: 50),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.share,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                    decoration: BoxDecoration(
+                      gradient: isFavorite
+                          ? const LinearGradient(
+                        colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                      )
+                          : null,
+                      color: isFavorite ? null : (isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5)),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37).withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.black : (isDarkMode ? Colors.white : Colors.black),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isFavorite = !isFavorite;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.black : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Book Content
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Book Cover Section with Hero Image
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: isDarkMode
+                              ? [
+                            Colors.black,
+                            const Color(0xFF1A1A1A),
+                          ]
+                              : [
+                            Colors.white,
+                            const Color(0xFFF5F5F5),
+                          ],
+                        ),
+                      ),
+                      child: Center(
+                        child: Stack(
+                          children: [
+                            // Glow effect behind book
+                            Positioned.fill(
+                              child: Container(
+                                margin: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                      blurRadius: 60,
+                                      spreadRadius: 10,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            );
-                          },
+                            ),
+                            // Book Cover
+                            Container(
+                              width: 220,
+                              height: 320,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.4),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 15),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Image.network(
+                                  'https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?w=400',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.grey[800]!,
+                                            Colors.grey[900]!,
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.book,
+                                          size: 80,
+                                          color: Colors.white54,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            // Discount Badge
+                            Positioned(
+                              top: 10,
+                              left: 10,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Colors.red, Color(0xFFD32F2F)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.red.withOpacity(0.4),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  '-20%',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+
+                    // Rating Section
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDarkMode
+                              ? [const Color(0xFF2A2A2A), const Color(0xFF1F1F1F)]
+                              : [Colors.white, const Color(0xFFFAFAFA)],
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFD4AF37).withOpacity(0.3),
+                          width: 1.5,
                         ),
-                        child: const Text(
-                          '-20%',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildRatingItem(
+                            icon: Icons.star,
+                            value: '5.0',
+                            label: 'Rating',
+                            isDarkMode: isDarkMode,
+                          ),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: Colors.grey.withOpacity(0.3),
+                          ),
+                          _buildRatingItem(
+                            icon: Icons.people,
+                            value: '2.9K',
+                            label: 'Voters',
+                            isDarkMode: isDarkMode,
+                          ),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: Colors.grey.withOpacity(0.3),
+                          ),
+                          _buildRatingItem(
+                            icon: Icons.local_fire_department,
+                            value: '15K',
+                            label: 'Sold',
+                            isDarkMode: isDarkMode,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Book Info Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                            ).createShader(bounds),
+                            child: Text(
+                              "Harry Potter and the Sorcerer's Stone",
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                                height: 1.3,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'by J. K. Rowling',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Description Section
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isDarkMode
+                                    ? [const Color(0xFF2A2A2A), const Color(0xFF1F1F1F)]
+                                    : [Colors.white, const Color(0xFFFAFAFA)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 4,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                        ),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Sinopsis',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode ? Colors.white : Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Merupakan ika dunia sihir yang tak terlupakan dan sakaskan awal dari sebuah petualangan legendaris! Harry Potter and the Sorcerer\'s Stone adalah gerbang perrama yang dunia sihir yang diciptakan oleh J.K. Rowling, di mana kita pertama kali bertema dengan Harry Potter, seorang anak yatim piatu yang tinggal di bawah tangga yang tidak Harmonis bersama Dursley. Di hari ulang tahunnya yang kesebelas, Harry menemukan Idatitasnya yang sebenarnya, selculi dia adalah seorang penyihir. Di hari ulang tahunnya yang ke sebelas Harry menemukan dia Hogwarts dan memulai hidup barunya, mengalami petualangan dengan teman-teman barunya dan menghadapi keluaran gajaji yang mengancam dunia sihir. Buku ini adalah pengantar yang sempurna untuk siapa yang peruch kesabaan, persaahabatan, dan pengorbanan.',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+                                    height: 1.8,
+                                    letterSpacing: 0.3,
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Book Details
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isDarkMode
+                                    ? [const Color(0xFF2A2A2A), const Color(0xFF1F1F1F)]
+                                    : [Colors.white, const Color(0xFFFAFAFA)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 4,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                        ),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Detail Buku',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode ? Colors.white : Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                _buildDetailRow(
+                                  icon: Icons.category,
+                                  label: 'Genre',
+                                  value: 'Fantasi',
+                                  isDarkMode: isDarkMode,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailRow(
+                                  icon: Icons.calendar_today,
+                                  label: 'Tahun Terbit',
+                                  value: '1997',
+                                  isDarkMode: isDarkMode,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailRow(
+                                  icon: Icons.menu_book,
+                                  label: 'Jumlah Halaman',
+                                  value: '500 Halaman',
+                                  isDarkMode: isDarkMode,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildDetailRow(
+                                  icon: Icons.language,
+                                  label: 'Bahasa',
+                                  value: 'Indonesia',
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 100),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+
+          // Bottom Action Bar
+          bottomNavigationBar: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
             ),
-            
-            // Book Info Section
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: SafeArea(
+              child: Row(
                 children: [
-                  const Text(
-                    "Harry Potter and the Sorcerer's Stone",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'by J. K. Rowling',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Merupakan ika dunia sihir yang tak terlupakan dan sakaskan awal dari sebuah petualangan legendaris! Harry Potter and the Sorcerer\'s Stone adalah gerbang perrama yang dunia sihir yang diciptakan oleh J.K. Rowling, di mana kita pertama kali bertema dengan Harry Potter, seorang anak yatim piatu yang tinggal di bawah tangga yang tidak Harmonis bersama Dursley. Di hari ulang tahunnya yang kesebelas, Harry menemukan Idatitasnya yang sebenarnya, selculi dia adalah seorang penyihir. Di hari ulang tahunnya yang ke sebelas Harry menemukan dia Hogwarts dan memulai hidup barunya, mengalami petualangan dengan teman-teman barunya dan menghadapi keluaran gajaji yang mengancam dunia sihir. Buku ini adalah pengantar yang sempurna untuk siapa yang peruch kesabaan, persaahabatan, dan pengorbanan.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFD4AF37).withOpacity(0.4),
+                            blurRadius: 15,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Icon(Icons.shopping_bag, color: Colors.black, size: 22),
+                            SizedBox(width: 10),
                             Text(
-                              'Fantasi',
+                              'Beli Sekarang',
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Genre',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Tahun Terbit',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '1997',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37),
+                        width: 2,
                       ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '500 Halaman',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Jumlah Halaman',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
+                    ),
+                    child: IconButton(
+                      onPressed: () {},
+                      padding: const EdgeInsets.all(16),
+                      icon: const Icon(
+                        Icons.shopping_cart_outlined,
+                        color: Color(0xFFD4AF37),
+                        size: 24,
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRatingItem({
+    required IconData icon,
+    required String value,
+    required String label,
+    required bool isDarkMode,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
             ),
-          ],
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.black, size: 20),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Beli Sekarang',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDarkMode,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: Colors.black, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
-                side: const BorderSide(color: Colors.blue),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black,
                 ),
               ),
-              child: const Icon(
-                Icons.shopping_cart_outlined,
-                color: Colors.blue,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
