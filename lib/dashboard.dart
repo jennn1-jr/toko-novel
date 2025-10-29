@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 // 1. TAMBAHKAN SEMUA IMPORT YANG DIBUTUHKAN DI SINI
 import 'package:flutter/material.dart';
 import 'package:tokonovel/about_page.dart'; // Pastikan path ini benar
 import 'package:tokonovel/book_detail_page.dart'; // Pastikan path ini benar
 import 'package:tokonovel/cart_page.dart'; // Pastikan path ini benar
+=======
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:tokonovel/book_detail_page.dart';
+import 'package:tokonovel/about_page.dart';
+import 'package:tokonovel/cart_page.dart';
+import 'package:tokonovel/cart_page.dart';
+import 'package:tokonovel/profile_page.dart'; // Import the CartPage
+>>>>>>> 7f2187507c7f3b068b8a69f103f5454ea687128e
 
 
 // 2. PINDAHKAN ATAU DEFINISIKAN ULANG CLASS NOVEL DI FILE INI
@@ -116,56 +126,64 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: CustomScrollView(
-        slivers: [
-          // App Bar
-          SliverAppBar(
-            backgroundColor: Colors.black,
-            pinned: true,
-            expandedHeight: 0,
-            toolbarHeight: 70,
-            automaticallyImplyLeading: false,
-            flexibleSpace: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    // Logo
-                    Row(
-                      children: [
-                        Icon(Icons.menu_book, color: Colors.white, size: 28),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'NOVELKU',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF5F5F5),
+    body: CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          backgroundColor: Colors.black, // Pastikan ada background color atau styling lain
+          pinned: true,
+          expandedHeight: 0, // Sesuaikan jika perlu
+          toolbarHeight: 70,
+          automaticallyImplyLeading: false, // Menghilangkan tombol back default
+          flexibleSpace: SafeArea(
+            child: Padding(
+              // ===== PERBAIKAN DI SINI =====
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Tambahkan parameter padding
+              // =============================
+              child: Row(
+                children: [
+                  // ... (Logo) ...
+                  Row(
+                    children: [
+                      Icon(Icons.menu_book, color: Colors.white, size: 28),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'NOVELKU',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 40),
+
+                  // Navigation Menu
+                  Expanded(
+                    child: Row(
+                      children: [
+                        _buildNavItem('Home', 0),
+                        _buildNavItem('Koleksi', 1),
+                        _buildNavItem('Keranjang', 2),
+                        _buildNavItem('About', 3),
                       ],
                     ),
-                    const SizedBox(width: 40),
+                  ),
 
-                    // Navigation Menu
-                    Expanded(
-                      child: Row(
-                        children: [
-                          _buildNavItem('Home', 0),
-                          _buildNavItem('Koleksi', 1),
-                          _buildNavItem('Keranjang', 2),
-                          _buildNavItem('About', 3),
-                        ],
-                      ),
+                  // Search Bar
+                  Container(
+                    width: 250,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(20),
                     ),
+<<<<<<< HEAD
 
                     // Search Bar
                     Container(
@@ -194,13 +212,41 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.grey[500],
                             size: 20,
                           ),
+=======
+                    child: TextField(
+                      controller: _searchController, // Pastikan _searchController didefinisikan di state
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Cari novel...',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10, // Sesuaikan padding vertikal agar teks di tengah
+                        ),
+                        suffixIcon: Icon(
+                          Icons.search,
+                          color: Colors.grey[500],
+                          size: 20,
+>>>>>>> 7f2187507c7f3b068b8a69f103f5454ea687128e
                         ),
                       ),
                     ),
-                    const SizedBox(width: 20),
+                  ),
+                  const SizedBox(width: 20),
 
-                    // User Profile
-                    Row(
+                  // User Profile (buat jadi GestureDetector)
+                  GestureDetector( // Dibungkus GestureDetector
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ProfilePage()), // Navigasi ke ProfilePage
+                      );
+                    },
+                    child: Row(
                       children: [
                         CircleAvatar(
                           backgroundColor: const Color(0xFF2A2A2A),
@@ -212,17 +258,23 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          'kelompok 5',
+                        // Ambil nama user dari FirebaseAuth atau Firestore jika perlu
+                        // Untuk sementara:
+                        Text(
+                          FirebaseAuth.instance.currentUser?.displayName ??
+                          FirebaseAuth.instance.currentUser?.email?.split('@')[0] ?? // Ambil bagian sebelum @ jika display name null
+                          'User',
                           style: TextStyle(color: Colors.white, fontSize: 14),
+                          overflow: TextOverflow.ellipsis, // Cegah nama terlalu panjang
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
+        ),
 
           // Hero Section
           SliverToBoxAdapter(
