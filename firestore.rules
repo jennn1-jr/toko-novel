@@ -1,0 +1,55 @@
+// Firestore Security Rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ======================
+    // 🔹 USERS (dokumen & subkoleksi)
+    // ======================
+    match /users/{userId} {
+      // Hanya pemilik UID yang boleh baca/tulis profilnya
+      allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+
+      // Lindungi subcollections di bawah users/{userId}/...
+      match /{sub=**} {
+        allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ======================
+    // 🔹 GENRES (read-only dari client)
+    // ======================
+    match /genres/{genreId} {
+      // Opsi A (Publik tanpa login):
+      allow read: if true;
+
+      // Opsi B (Wajib login) → gunakan ini kalau mau “hanya user login yang bisa lihat”:
+      // allow read: if request.auth != null;
+
+      // Tidak boleh tulis dari client
+      allow write: if false;
+    }
+
+    // ======================
+    // 🔹 BOOKS (read-only dari client)
+    //    *Jika koleksimu bernama NOVELS, ganti "books" -> "novels"
+    // ======================
+    match /books/{bookId} {
+      // Opsi A (Publik tanpa login):
+      allow read: if true;
+
+      // Opsi B (Wajib login):
+      // allow read: if request.auth != null;
+
+      // Tidak boleh tulis dari client
+      allow write: if false;
+    }
+
+    // ======================
+    // 🔹 Default: blok semua yang lain
+    // ======================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -6,6 +6,8 @@ import 'package:tokonovel/about_page.dart';
 import 'package:tokonovel/cart_page.dart';
 import 'package:tokonovel/profile_page.dart';
 import 'package:tokonovel/theme.dart';
+import 'package:tokonovel/all_book_page.dart';
+import 'package:tokonovel/debug_firestore_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -30,7 +32,8 @@ class _DashboardPageState extends State<DashboardPage> {
       author: "by J. K. Rowling",
       rating: 5.0,
       voters: "2,987 voters",
-      description: "Masuki dunia sihir penuh petualangan dan misteri bersama Harry Potter.",
+      description:
+          "Masuki dunia sihir penuh petualangan dan misteri bersama Harry Potter.",
       imageUrl: "assets/images/harry_potter.png",
     ),
     Book(
@@ -54,7 +57,8 @@ class _DashboardPageState extends State<DashboardPage> {
       author: "by J.R.R. Tolkien",
       rating: 5.0,
       voters: "3,421 voters",
-      description: "Epik fantasi legendaris tentang perjalanan heroik menghancurkan cincin.",
+      description:
+          "Epik fantasi legendaris tentang perjalanan heroik menghancurkan cincin.",
       imageUrl: "assets/images/lotr.png",
     ),
     Book(
@@ -70,7 +74,8 @@ class _DashboardPageState extends State<DashboardPage> {
       author: "by Pramoedya Ananta Toer",
       rating: 4.9,
       voters: "2,541 voters",
-      description: "Kisah Minke di tengah pusaran perubahan sosial dan politik Hindia Belanda.",
+      description:
+          "Kisah Minke di tengah pusaran perubahan sosial dan politik Hindia Belanda.",
       imageUrl: "assets/images/bumi_manusia.png",
     ),
     Book(
@@ -78,7 +83,8 @@ class _DashboardPageState extends State<DashboardPage> {
       author: "by Eka Kurniawan",
       rating: 4.8,
       voters: "1,890 voters",
-      description: "Kisah tragis dan magis seorang wanita dan kutukan kecantikannya.",
+      description:
+          "Kisah tragis dan magis seorang wanita dan kutukan kecantikannya.",
       imageUrl: "assets/images/cantik_itu_luka.png",
     ),
     Book(
@@ -86,7 +92,8 @@ class _DashboardPageState extends State<DashboardPage> {
       author: "by Ahmad Fuadi",
       rating: 4.7,
       voters: "2,333 voters",
-      description: "Perjuangan enam santri dari berbagai daerah untuk meraih mimpi mereka.",
+      description:
+          "Perjuangan enam santri dari berbagai daerah untuk meraih mimpi mereka.",
       imageUrl: "assets/images/negeri_5_menara.png",
     ),
     Book(
@@ -94,7 +101,8 @@ class _DashboardPageState extends State<DashboardPage> {
       author: "by Dee Lestari",
       rating: 4.6,
       voters: "1,988 voters",
-      description: "Kisah tentang takdir, cinta, dan impian yang terjalin rumit.",
+      description:
+          "Kisah tentang takdir, cinta, dan impian yang terjalin rumit.",
       imageUrl: "assets/images/perahu_kertas.png",
     ),
     Book(
@@ -121,15 +129,21 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _filteredBooks = List.from(_allBooks); // Initialize filtered books with all books
+    _filteredBooks = List.from(
+      _allBooks,
+    ); // Initialize filtered books with all books
     _startAutoScroll();
     _loadUserName();
-    _searchController.addListener(_filterBooks); // Add listener for search input
+    _searchController.addListener(
+      _filterBooks,
+    ); // Add listener for search input
   }
 
   void _loadUserName() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null && user.displayName != null && user.displayName!.isNotEmpty) {
+    if (user != null &&
+        user.displayName != null &&
+        user.displayName!.isNotEmpty) {
       setState(() {
         _userName = user.displayName!;
       });
@@ -144,7 +158,7 @@ class _DashboardPageState extends State<DashboardPage> {
       } else {
         _filteredBooks = _allBooks.where((book) {
           return book.title.toLowerCase().contains(query) ||
-                 book.author.toLowerCase().contains(query);
+              book.author.toLowerCase().contains(query);
         }).toList();
       }
       // Reset page controller if filtered list changes significantly
@@ -157,7 +171,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!_isPaused && _pageController.hasClients && _filteredBooks.isNotEmpty) {
+      if (!_isPaused &&
+          _pageController.hasClients &&
+          _filteredBooks.isNotEmpty) {
         int prevPage = _currentPage - 1;
         if (prevPage < 0) {
           prevPage = _filteredBooks.length - 1;
@@ -222,7 +238,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: isDarkMode ? Colors.black : Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(int.parse((0.1 * 255).round().toString())), // Replaced withOpacity
+                        color: Colors.black.withAlpha(
+                          int.parse((0.1 * 255).round().toString()),
+                        ), // Replaced withOpacity
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -230,7 +248,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 title: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32.0,
+                    vertical: 12.0,
+                  ),
                   child: Row(
                     children: [
                       Container(
@@ -241,7 +262,11 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.menu_book, color: Colors.black, size: 28),
+                        child: const Icon(
+                          Icons.menu_book,
+                          color: Colors.black,
+                          size: 28,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       ShaderMask(
@@ -273,33 +298,51 @@ class _DashboardPageState extends State<DashboardPage> {
                         width: 280,
                         height: 45,
                         decoration: BoxDecoration(
-                          color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(25),
                           border: Border.all(
-                            color: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+                            color: isDarkMode
+                                ? Colors.grey[800]!
+                                : Colors.grey[300]!,
                             width: 1,
                           ),
                         ),
                         child: TextField(
                           controller: _searchController,
-                          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Cari novel favorit Anda...',
                             hintStyle: TextStyle(
-                              color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                              color: isDarkMode
+                                  ? Colors.grey[500]
+                                  : Colors.grey[600],
                               fontSize: 14,
                             ),
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                             suffixIcon: Container(
                               margin: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                  colors: [
+                                    Color(0xFFD4AF37),
+                                    Color(0xFFFFD700),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: const Icon(Icons.search, color: Colors.black, size: 20),
+                              child: const Icon(
+                                Icons.search,
+                                color: Colors.black,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ),
@@ -309,17 +352,26 @@ class _DashboardPageState extends State<DashboardPage> {
                         onTap: () async {
                           await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const ProfilePage()),
+                            MaterialPageRoute(
+                              builder: (context) => const ProfilePage(),
+                            ),
                           );
                           _loadUserName(); // Refresh name when returning from ProfilePage
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                            color: isDarkMode
+                                ? const Color(0xFF2A2A2A)
+                                : const Color(0xFFF5F5F5),
                             borderRadius: BorderRadius.circular(25),
                             border: Border.all(
-                              color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
+                              color: const Color(0xFFD4AF37).withAlpha(
+                                int.parse((0.3 * 255).round().toString()),
+                              ), // Replaced withOpacity
                               width: 1.5,
                             ),
                           ),
@@ -329,21 +381,32 @@ class _DashboardPageState extends State<DashboardPage> {
                                 padding: const EdgeInsets.all(2),
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                    colors: [
+                                      Color(0xFFD4AF37),
+                                      Color(0xFFFFD700),
+                                    ],
                                   ),
                                   shape: BoxShape.circle,
                                 ),
                                 child: CircleAvatar(
-                                  backgroundColor: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
+                                  backgroundColor: isDarkMode
+                                      ? const Color(0xFF2A2A2A)
+                                      : Colors.white,
                                   radius: 16,
-                                  child: const Icon(Icons.person, color: Color(0xFFD4AF37), size: 18),
+                                  child: const Icon(
+                                    Icons.person,
+                                    color: Color(0xFFD4AF37),
+                                    size: 18,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 10),
                               Text(
                                 _userName, // Display the dynamic user name
                                 style: TextStyle(
-                                  color: isDarkMode ? Colors.white : Colors.black,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -355,10 +418,43 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 12),
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
+                            color: const Color(0xFFD4AF37).withAlpha(
+                              int.parse((0.3 * 255).round().toString()),
+                            ), // Replaced withOpacity
+                            width: 1.5,
+                          ),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.bug_report,
+                            color: Color(0xFFD4AF37),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const DebugFirestorePage(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37).withAlpha(
+                              int.parse((0.3 * 255).round().toString()),
+                            ), // Replaced withOpacity
                             width: 1.5,
                           ),
                         ),
@@ -384,32 +480,42 @@ class _DashboardPageState extends State<DashboardPage> {
 
               SliverToBoxAdapter(
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 50),
-                  padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 50,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 60,
+                    horizontal: 40,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: isDarkMode
                           ? [
-                        const Color(0xFF1A1A1A),
-                        const Color(0xFF2A2A2A),
-                        const Color(0xFF1A1A1A),
-                      ]
+                              const Color(0xFF1A1A1A),
+                              const Color(0xFF2A2A2A),
+                              const Color(0xFF1A1A1A),
+                            ]
                           : [
-                        const Color(0xFFFAFAFA),
-                        const Color(0xFFFFFFFF),
-                        const Color(0xFFF5F5F5),
-                      ],
+                              const Color(0xFFFAFAFA),
+                              const Color(0xFFFFFFFF),
+                              const Color(0xFFF5F5F5),
+                            ],
                     ),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: const Color(0xFFD4AF37).withAlpha(int.parse((0.2 * 255).round().toString())), // Replaced withOpacity
+                      color: const Color(0xFFD4AF37).withAlpha(
+                        int.parse((0.2 * 255).round().toString()),
+                      ), // Replaced withOpacity
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withAlpha(int.parse((0.1 * 255).round().toString())), // Replaced withOpacity
+                        color: const Color(0xFFD4AF37).withAlpha(
+                          int.parse((0.1 * 255).round().toString()),
+                        ), // Replaced withOpacity
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -419,7 +525,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       ShaderMask(
                         shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700), Color(0xFFD4AF37)],
+                          colors: [
+                            Color(0xFFD4AF37),
+                            Color(0xFFFFD700),
+                            Color(0xFFD4AF37),
+                          ],
                         ).createShader(bounds),
                         child: const Text(
                           'Selamat Datang di NOVELKU',
@@ -437,7 +547,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         'Temukan ribuan novel menarik, dari best seller hingga digital original!',
                         style: TextStyle(
                           fontSize: 18,
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+                          color: isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[700],
                           height: 1.5,
                           letterSpacing: 0.5,
                         ),
@@ -452,18 +564,34 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withAlpha(int.parse((0.4 * 255).round().toString())), // Replaced withOpacity
+                              color: const Color(0xFFD4AF37).withAlpha(
+                                int.parse((0.4 * 255).round().toString()),
+                              ), // Replaced withOpacity
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Navigate to AllBooksPage showing all novels
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AllBooksPage(
+                                  selectedCategorySlug: 'buku/semua',
+                                  selectedGenreId: null,
+                                ),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 48,
+                              vertical: 18,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -481,7 +609,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                               ),
                               SizedBox(width: 8),
-                              Icon(Icons.arrow_forward, color: Colors.black, size: 20),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.black,
+                                size: 20,
+                              ),
                             ],
                           ),
                         ),
@@ -524,7 +656,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Icon(Icons.local_fire_department, color: Color(0xFFD4AF37), size: 32),
+                      const Icon(
+                        Icons.local_fire_department,
+                        color: Color(0xFFD4AF37),
+                        size: 32,
+                      ),
                     ],
                   ),
                 ),
@@ -549,19 +685,22 @@ class _DashboardPageState extends State<DashboardPage> {
                             double value = 1.0;
                             if (_pageController.position.haveDimensions) {
                               value = _pageController.page! - index;
-                              value = (1 - (value.abs() * 0.25)).clamp(0.85, 1.0);
+                              value = (1 - (value.abs() * 0.25)).clamp(
+                                0.85,
+                                1.0,
+                              );
                             }
                             return Center(
                               child: Transform.scale(
                                 scale: value,
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               ),
                             );
                           },
-                          child: BookCard(book: _filteredBooks[index], isDarkMode: isDarkMode), // Use filtered books
+                          child: BookCard(
+                            book: _filteredBooks[index],
+                            isDarkMode: isDarkMode,
+                          ), // Use filtered books
                         );
                       },
                     ),
@@ -576,7 +715,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
                       _filteredBooks.length, // Use filtered books
-                          (index) => AnimatedContainer(
+                      (index) => AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         margin: const EdgeInsets.symmetric(horizontal: 5),
                         height: 10,
@@ -584,19 +723,26 @@ class _DashboardPageState extends State<DashboardPage> {
                         decoration: BoxDecoration(
                           gradient: _currentPage == index
                               ? const LinearGradient(
-                            colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                          )
+                                  colors: [
+                                    Color(0xFFD4AF37),
+                                    Color(0xFFFFD700),
+                                  ],
+                                )
                               : null,
-                          color: _currentPage == index ? null : Colors.grey[600],
+                          color: _currentPage == index
+                              ? null
+                              : Colors.grey[600],
                           borderRadius: BorderRadius.circular(5),
                           boxShadow: _currentPage == index
                               ? [
-                            BoxShadow(
-                              color: const Color(0xFFD4AF37).withAlpha(int.parse((0.5 * 255).round().toString())), // Replaced withOpacity
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
+                                  BoxShadow(
+                                    color: const Color(0xFFD4AF37).withAlpha(
+                                      int.parse((0.5 * 255).round().toString()),
+                                    ), // Replaced withOpacity
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
                               : null,
                         ),
                       ),
@@ -652,7 +798,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       physics: const BouncingScrollPhysics(),
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
-                        return CategoryCard(category: categories[index], isDarkMode: isDarkMode);
+                        return CategoryCard(
+                          category: categories[index],
+                          isDarkMode: isDarkMode,
+                        );
                       },
                     ),
                   ),
@@ -668,12 +817,18 @@ class _DashboardPageState extends State<DashboardPage> {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF388E3C)],
+                        colors: [
+                          Color(0xFF1B5E20),
+                          Color(0xFF2E7D32),
+                          Color(0xFF388E3C),
+                        ],
                       ),
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF1B5E20).withAlpha(int.parse((0.4 * 255).round().toString())), // Replaced withOpacity
+                          color: const Color(0xFF1B5E20).withAlpha(
+                            int.parse((0.4 * 255).round().toString()),
+                          ), // Replaced withOpacity
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -684,10 +839,16 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(int.parse((0.2 * 255).round().toString())), // Replaced withOpacity
+                            color: Colors.white.withAlpha(
+                              int.parse((0.2 * 255).round().toString()),
+                            ), // Replaced withOpacity
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.local_offer, size: 56, color: Colors.white),
+                          child: const Icon(
+                            Icons.local_offer,
+                            size: 56,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         const Text(
@@ -702,7 +863,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         const SizedBox(height: 12),
                         ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFD4AF37), Color(0xFFFFD700)],
+                            colors: [
+                              Color(0xFFFFD700),
+                              Color(0xFFD4AF37),
+                              Color(0xFFFFD700),
+                            ],
                           ).createShader(bounds),
                           child: const Text(
                             'Diskon Hingga 50%',
@@ -717,7 +882,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         const SizedBox(height: 12),
                         const Text(
                           'Novel Terpilih',
-                          style: TextStyle(fontSize: 18, color: Colors.white70, letterSpacing: 0.5),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white70,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 28),
                         Container(
@@ -728,7 +897,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFD4AF37).withAlpha(int.parse((0.5 * 255).round().toString())), // Replaced withOpacity
+                                color: const Color(0xFFD4AF37).withAlpha(
+                                  int.parse((0.5 * 255).round().toString()),
+                                ), // Replaced withOpacity
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -739,7 +910,10 @@ class _DashboardPageState extends State<DashboardPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
-                              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 48,
+                                vertical: 16,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
                               ),
@@ -757,7 +931,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                 ),
                                 SizedBox(width: 8),
-                                Icon(Icons.shopping_cart, color: Colors.black, size: 20),
+                                Icon(
+                                  Icons.shopping_cart,
+                                  color: Colors.black,
+                                  size: 20,
+                                ),
                               ],
                             ),
                           ),
@@ -786,15 +964,17 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-          )
+                  colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                )
               : null,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           title,
           style: TextStyle(
-            color: isSelected ? Colors.black : (isDarkMode ? Colors.white : Colors.black87),
+            color: isSelected
+                ? Colors.black
+                : (isDarkMode ? Colors.white : Colors.black87),
             fontSize: 15,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             letterSpacing: 0.3,
@@ -827,7 +1007,8 @@ class BookCard extends StatelessWidget {
   final Book book;
   final bool isDarkMode;
 
-  const BookCard({Key? key, required this.book, required this.isDarkMode}) : super(key: key);
+  const BookCard({Key? key, required this.book, required this.isDarkMode})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -843,12 +1024,16 @@ class BookCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
+          color: const Color(0xFFD4AF37).withAlpha(
+            int.parse((0.3 * 255).round().toString()),
+          ), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(int.parse((0.2 * 255).round().toString())), // Replaced withOpacity
+            color: Colors.black.withAlpha(
+              int.parse((0.2 * 255).round().toString()),
+            ), // Replaced withOpacity
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -874,10 +1059,7 @@ class BookCard extends StatelessWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Colors.grey[800]!,
-                                Colors.grey[900]!,
-                              ],
+                              colors: [Colors.grey[800]!, Colors.grey[900]!],
                             ),
                           ),
                           child: const Center(
@@ -895,7 +1077,10 @@ class BookCard extends StatelessWidget {
                     top: 12,
                     right: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
@@ -903,7 +1088,9 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
+                            color: Colors.black.withAlpha(
+                              int.parse((0.3 * 255).round().toString()),
+                            ), // Replaced withOpacity
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -982,7 +1169,9 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD4AF37).withAlpha(int.parse((0.4 * 255).round().toString())), // Replaced withOpacity
+                            color: const Color(0xFFD4AF37).withAlpha(
+                              int.parse((0.4 * 255).round().toString()),
+                            ), // Replaced withOpacity
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -992,7 +1181,9 @@ class BookCard extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const BookDetailPage()),
+                            MaterialPageRoute(
+                              builder: (context) => const BookDetailPage(),
+                            ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -1016,7 +1207,11 @@ class BookCard extends StatelessWidget {
                               ),
                             ),
                             SizedBox(width: 6),
-                            Icon(Icons.arrow_forward, color: Colors.black, size: 16),
+                            Icon(
+                              Icons.arrow_forward,
+                              color: Colors.black,
+                              size: 16,
+                            ),
                           ],
                         ),
                       ),
@@ -1039,11 +1234,35 @@ class Category {
   Category({required this.name, required this.icon});
 }
 
+// Helper function to map category name to Firestore category slug
+String _getCategorySlug(String categoryName) {
+  switch (categoryName) {
+    case 'All':
+      return 'buku/semua'; // All books
+    case 'Romance':
+      return 'buku/romance';
+    case 'Fiction':
+      return 'buku/fiksi-sastra'; // Novel
+    case 'Crime':
+      return 'buku/crime';
+    case 'Science':
+      return 'buku/sains';
+    case 'Comedy':
+      return 'buku/komedi';
+    default:
+      return 'buku/semua';
+  }
+}
+
 class CategoryCard extends StatelessWidget {
   final Category category;
   final bool isDarkMode;
 
-  const CategoryCard({Key? key, required this.category, required this.isDarkMode}) : super(key: key);
+  const CategoryCard({
+    Key? key,
+    required this.category,
+    required this.isDarkMode,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1060,12 +1279,16 @@ class CategoryCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
+          color: const Color(0xFFD4AF37).withAlpha(
+            int.parse((0.3 * 255).round().toString()),
+          ), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(int.parse((0.1 * 255).round().toString())), // Replaced withOpacity
+            color: Colors.black.withAlpha(
+              int.parse((0.1 * 255).round().toString()),
+            ), // Replaced withOpacity
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1075,7 +1298,33 @@ class CategoryCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {},
+          onTap: () {
+            // Navigate to AllBooksPage when category is tapped
+            if (category.name == 'All') {
+              // For "All" category, show all novels from both komik and fiksi-sastra
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AllBooksPage(
+                    selectedCategorySlug: 'buku/semua',
+                    selectedGenreId: null,
+                  ),
+                ),
+              );
+            } else {
+              // For other categories, navigate with appropriate slug
+              final slug = _getCategorySlug(category.name);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AllBooksPage(
+                    selectedCategorySlug: slug,
+                    selectedGenreId: null,
+                  ),
+                ),
+              );
+            }
+          },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1088,7 +1337,9 @@ class CategoryCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD4AF37).withAlpha(int.parse((0.3 * 255).round().toString())), // Replaced withOpacity
+                      color: const Color(0xFFD4AF37).withAlpha(
+                        int.parse((0.3 * 255).round().toString()),
+                      ), // Replaced withOpacity
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

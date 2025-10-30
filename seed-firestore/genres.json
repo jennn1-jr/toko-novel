@@ -1,0 +1,31 @@
+[
+{"type":"header","version":"5.2.1","comment":"Export to JSON plugin for PHPMyAdmin"},
+{"type":"database","name":"novel_store"},
+{"type":"table","name":"genres","database":"novel_store","data":
+[
+{"id":"1","name":"Fantasi","slug":"buku\/komik\/fantasi-fiksi-ilmiah","created_at":"2025-10-30 21:41:44.334"},
+{"id":"2","name":"Horor","slug":"buku\/komik\/horor-supernatural","created_at":"2025-10-30 21:41:55.840"},
+{"id":"3","name":"Kejahatan & Misteri","slug":"buku\/komik\/misteri-kriminal","created_at":"2025-10-30 21:41:58.808"},
+{"id":"4","name":"Romantis","slug":"buku\/komik\/romansa","created_at":"2025-10-30 21:42:04.172"},
+{"id":"5","name":"Fiksi Sejarah","slug":"buku\/komik\/sejarah-2","created_at":"2025-10-30 21:42:16.083"},
+{"id":"6","name":"Humor","slug":"buku\/komik\/komedi-1","created_at":"2025-10-30 21:42:27.194"},
+{"id":"7","name":"Manga","slug":"buku\/komik\/manga","created_at":"2025-10-30 21:42:34.454"},
+{"id":"8","name":"Agama","slug":"buku\/fiksi-sastra\/agama-5","created_at":"2025-10-30 21:42:44.186"},
+{"id":"9","name":"Fantasi","slug":"buku\/fiksi-sastra\/fantasi","created_at":"2025-10-30 21:42:50.226"},
+{"id":"10","name":"Horor","slug":"buku\/fiksi-sastra\/horor","created_at":"2025-10-30 21:42:58.268"},
+{"id":"11","name":"Klasik","slug":"buku\/fiksi-sastra\/klasik","created_at":"2025-10-30 21:43:06.602"},
+{"id":"12","name":"Muslim","slug":"buku\/fiksi-sastra\/novel-15","created_at":"2025-10-30 21:43:17.023"},
+{"id":"13","name":"Sastra","slug":"buku\/fiksi-sastra\/fiksi-populer","created_at":"2025-10-30 21:43:29.851"},
+{"id":"14","name":"Buku","slug":"buku","created_at":"2025-10-30 21:43:40.279"},
+{"id":"15","name":"Sejarah","slug":"buku\/fiksi-sastra\/fiksi-sejarah-1","created_at":"2025-10-30 21:43:42.603"},
+{"id":"16","name":"Antologi","slug":"buku\/fiksi-sastra\/kumpulan-cerpen-4","created_at":"2025-10-30 21:43:53.676"},
+{"id":"17","name":"Fiksi Ilmiah","slug":"buku\/fiksi-sastra\/fiksi-ilmiah-1","created_at":"2025-10-30 21:44:05.607"},
+{"id":"18","name":"Kehidupan Kota","slug":"buku\/fiksi-sastra\/metropop","created_at":"2025-10-30 21:44:20.560"},
+{"id":"19","name":"Misteri & Detektif","slug":"buku\/fiksi-sastra\/misteri-detektif","created_at":"2025-10-30 21:44:30.174"},
+{"id":"20","name":"Sastra Dunia Asia (Umum)","slug":"buku\/fiksi-sastra\/sastra-indonesia","created_at":"2025-10-30 21:44:41.016"},
+{"id":"21","name":"Novel","slug":"buku\/fiksi-sastra\/novel","created_at":"2025-10-30 21:44:51.324"},
+{"id":"22","name":"Romantis","slug":"buku\/fiksi-sastra\/romance-1","created_at":"2025-10-30 21:44:56.276"},
+{"id":"23","name":"Thriller","slug":"buku\/fiksi-sastra\/thriller","created_at":"2025-10-30 21:45:17.631"}
+]
+}
+]

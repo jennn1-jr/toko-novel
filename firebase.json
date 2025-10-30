@@ -1,1 +1,31 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"toko-novel","appId":"1:33210290917:android:a730d86526ba9412acfa0c","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"toko-novel","configurations":{"android":"1:33210290917:android:a730d86526ba9412acfa0c","ios":"1:33210290917:ios:a7602e5024bf0f5bacfa0c","macos":"1:33210290917:ios:a7602e5024bf0f5bacfa0c","web":"1:33210290917:web:12fb3edacb954986acfa0c","windows":"1:33210290917:web:c63817b0d1fa74f0acfa0c"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "toko-novel",
+          "appId": "1:33210290917:android:a730d86526ba9412acfa0c",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "toko-novel",
+          "configurations": {
+            "android": "1:33210290917:android:a730d86526ba9412acfa0c",
+            "ios": "1:33210290917:ios:a7602e5024bf0f5bacfa0c",
+            "macos": "1:33210290917:ios:a7602e5024bf0f5bacfa0c",
+            "web": "1:33210290917:web:12fb3edacb954986acfa0c",
+            "windows": "1:33210290917:web:c63817b0d1fa74f0acfa0c"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
