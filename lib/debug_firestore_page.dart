@@ -37,6 +37,11 @@ class _DebugFirestorePageState extends State<DebugFirestorePage> {
         sb.writeln('  - ID: ${doc.id}');
         sb.writeln('    title: ${data['title']}');
         sb.writeln('    genre_id: ${data['genre_id']}');
+        sb.writeln('    image_url: ${data['image_url'] ?? 'NULL'}');
+        sb.writeln('    author: ${data['author'] ?? 'NULL'}');
+        sb.writeln(
+          '    description: ${(data['description'] ?? 'NULL').toString().substring(0, 50)}...',
+        );
       }
 
       sb.writeln('\n=== QUERY TEST: whereIn genre_id ===');

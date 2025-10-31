@@ -386,6 +386,9 @@ class _AllBooksPageState extends State<AllBooksPage> {
                               if (i >= filtered.length)
                                 return const SizedBox.shrink();
                               final b = filtered[i];
+                              print(
+                                'DEBUG AllBooksPage: Book="${b.title}", imageUrl="${b.imageUrl}"',
+                              );
                               final imageUrl = coverProxy(
                                 b.imageUrl,
                                 w: 480,
@@ -396,7 +399,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const BookDetailPage(),
+                                      builder: (_) => BookDetailPage(book: b),
                                     ),
                                   );
                                 },

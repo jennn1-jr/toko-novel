@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tokonovel/theme.dart';
+import 'models/book_model.dart';
+import 'utils/image_proxy.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,7 +25,9 @@ class MyApp extends StatelessWidget {
 }
 
 class BookDetailPage extends StatefulWidget {
-  const BookDetailPage({Key? key}) : super(key: key);
+  final BookModel? book;
+
+  const BookDetailPage({Key? key, this.book}) : super(key: key);
 
   @override
   State<BookDetailPage> createState() => _BookDetailPageState();
@@ -31,6 +35,79 @@ class BookDetailPage extends StatefulWidget {
 
 class _BookDetailPageState extends State<BookDetailPage> {
   bool isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.book != null) {
+      print('DEBUG BookDetail: Book = ${widget.book!.title}');
+      print('DEBUG BookDetail: ImageUrl = ${widget.book!.imageUrl}');
+      print(
+        'DEBUG BookDetail: ImageUrl isEmpty = ${widget.book!.imageUrl.isEmpty}',
+      );
+    }
+  }
+
+  /// Build book cover image with fallback handling
+  Widget _buildBookImage(String imageUrl, {required bool isDarkMode}) {
+    // Use coverProxy to optimize image loading
+    final proxiedUrl = coverProxy(imageUrl, w: 400, h: 600);
+    print('DEBUG: Original imageUrl: $imageUrl');
+    print('DEBUG: Proxied imageUrl: $proxiedUrl');
+
+    // If proxied URL is empty, show placeholder
+    if (proxiedUrl.isEmpty) {
+      print('DEBUG: Image URL is empty, showing placeholder');
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.grey[800]!, Colors.grey[900]!],
+          ),
+        ),
+        child: const Center(
+          child: Icon(Icons.book, size: 80, color: Colors.white54),
+        ),
+      );
+    }
+
+    // Try to load image from URL
+    return Image.network(
+      proxiedUrl,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.grey[700]!, Colors.grey[800]!],
+            ),
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        print('DEBUG: Image load error: $error, showing placeholder');
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.grey[800]!, Colors.grey[900]!],
+            ),
+          ),
+          child: const Center(
+            child: Icon(Icons.book, size: 80, color: Colors.white54),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +130,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 leading: Container(
                   margin: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                    color: isDarkMode
+                        ? const Color(0xFF2A2A2A)
+                        : const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: const Color(0xFFD4AF37).withOpacity(0.3),
@@ -72,9 +151,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 ),
                 actions: [
                   Container(
-                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                      color: isDarkMode
+                          ? const Color(0xFF2A2A2A)
+                          : const Color(0xFFF5F5F5),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: const Color(0xFFD4AF37).withOpacity(0.3),
@@ -90,14 +174,21 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     ),
                   ),
                   Container(
-                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 12,
+                    ),
                     decoration: BoxDecoration(
                       gradient: isFavorite
                           ? const LinearGradient(
-                        colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                      )
+                              colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                            )
                           : null,
-                      color: isFavorite ? null : (isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5)),
+                      color: isFavorite
+                          ? null
+                          : (isDarkMode
+                                ? const Color(0xFF2A2A2A)
+                                : const Color(0xFFF5F5F5)),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: const Color(0xFFD4AF37).withOpacity(0.3),
@@ -107,7 +198,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     child: IconButton(
                       icon: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? Colors.black : (isDarkMode ? Colors.white : Colors.black),
+                        color: isFavorite
+                            ? Colors.black
+                            : (isDarkMode ? Colors.white : Colors.black),
                       ),
                       onPressed: () {
                         setState(() {
@@ -139,20 +232,17 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     // Book Cover Section with Hero Image
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 40,
+                        horizontal: 24,
+                      ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: isDarkMode
-                              ? [
-                            Colors.black,
-                            const Color(0xFF1A1A1A),
-                          ]
-                              : [
-                            Colors.white,
-                            const Color(0xFFF5F5F5),
-                          ],
+                              ? [Colors.black, const Color(0xFF1A1A1A)]
+                              : [Colors.white, const Color(0xFFF5F5F5)],
                         ),
                       ),
                       child: Center(
@@ -166,7 +256,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                      color: const Color(
+                                        0xFFD4AF37,
+                                      ).withOpacity(0.3),
                                       blurRadius: 60,
                                       spreadRadius: 10,
                                     ),
@@ -181,7 +273,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                  color: const Color(
+                                    0xFFD4AF37,
+                                  ).withOpacity(0.3),
                                   width: 2,
                                 ),
                                 boxShadow: [
@@ -194,31 +288,37 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(18),
-                                child: Image.network(
-                                  'https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?w=400',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Colors.grey[800]!,
-                                            Colors.grey[900]!,
-                                          ],
-                                        ),
+                                child: widget.book != null
+                                    ? _buildBookImage(
+                                        widget.book!.imageUrl,
+                                        isDarkMode: isDarkMode,
+                                      )
+                                    : Image.network(
+                                        'https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?w=400',
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      Colors.grey[800]!,
+                                                      Colors.grey[900]!,
+                                                    ],
+                                                  ),
+                                                ),
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.book,
+                                                    size: 80,
+                                                    color: Colors.white54,
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                       ),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.book,
-                                          size: 80,
-                                          color: Colors.white54,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
                               ),
                             ),
                             // Discount Badge
@@ -265,7 +365,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: isDarkMode
-                              ? [const Color(0xFF2A2A2A), const Color(0xFF1F1F1F)]
+                              ? [
+                                  const Color(0xFF2A2A2A),
+                                  const Color(0xFF1F1F1F),
+                                ]
                               : [Colors.white, const Color(0xFFFAFAFA)],
                         ),
                         borderRadius: BorderRadius.circular(20),
@@ -286,7 +389,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         children: [
                           _buildRatingItem(
                             icon: Icons.star,
-                            value: '5.0',
+                            value: '${widget.book?.rating ?? 0.0}',
                             label: 'Rating',
                             isDarkMode: isDarkMode,
                           ),
@@ -297,7 +400,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                           _buildRatingItem(
                             icon: Icons.people,
-                            value: '2.9K',
+                            value: '${widget.book?.voters ?? 0} K',
                             label: 'Voters',
                             isDarkMode: isDarkMode,
                           ),
@@ -308,8 +411,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                           _buildRatingItem(
                             icon: Icons.local_fire_department,
-                            value: '15K',
-                            label: 'Sold',
+                            value:
+                                '${(widget.book?.price ?? 0).toStringAsFixed(0)}',
+                            label: 'Harga',
                             isDarkMode: isDarkMode,
                           ),
                         ],
@@ -329,7 +433,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
                             ).createShader(bounds),
                             child: Text(
-                              "Harry Potter and the Sorcerer's Stone",
+                              widget.book?.title ?? "Book Title",
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900,
@@ -343,16 +447,22 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                    colors: [
+                                      Color(0xFFD4AF37),
+                                      Color(0xFFFFD700),
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Text(
-                                  'by J. K. Rowling',
-                                  style: TextStyle(
+                                child: Text(
+                                  'by ${widget.book?.author ?? "Unknown Author"}',
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black,
@@ -369,7 +479,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: isDarkMode
-                                    ? [const Color(0xFF2A2A2A), const Color(0xFF1F1F1F)]
+                                    ? [
+                                        const Color(0xFF2A2A2A),
+                                        const Color(0xFF1F1F1F),
+                                      ]
                                     : [Colors.white, const Color(0xFFFAFAFA)],
                               ),
                               borderRadius: BorderRadius.circular(20),
@@ -388,7 +501,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                       height: 24,
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                          colors: [
+                                            Color(0xFFD4AF37),
+                                            Color(0xFFFFD700),
+                                          ],
                                         ),
                                         borderRadius: BorderRadius.circular(2),
                                       ),
@@ -399,17 +515,22 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : Colors.black,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'Merupakan ika dunia sihir yang tak terlupakan dan sakaskan awal dari sebuah petualangan legendaris! Harry Potter and the Sorcerer\'s Stone adalah gerbang perrama yang dunia sihir yang diciptakan oleh J.K. Rowling, di mana kita pertama kali bertema dengan Harry Potter, seorang anak yatim piatu yang tinggal di bawah tangga yang tidak Harmonis bersama Dursley. Di hari ulang tahunnya yang kesebelas, Harry menemukan Idatitasnya yang sebenarnya, selculi dia adalah seorang penyihir. Di hari ulang tahunnya yang ke sebelas Harry menemukan dia Hogwarts dan memulai hidup barunya, mengalami petualangan dengan teman-teman barunya dan menghadapi keluaran gajaji yang mengancam dunia sihir. Buku ini adalah pengantar yang sempurna untuk siapa yang peruch kesabaan, persaahabatan, dan pengorbanan.',
+                                  widget.book?.description ??
+                                      'Tidak ada deskripsi.',
                                   style: TextStyle(
                                     fontSize: 15,
-                                    color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+                                    color: isDarkMode
+                                        ? Colors.grey[400]
+                                        : Colors.grey[700],
                                     height: 1.8,
                                     letterSpacing: 0.3,
                                   ),
@@ -427,7 +548,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: isDarkMode
-                                    ? [const Color(0xFF2A2A2A), const Color(0xFF1F1F1F)]
+                                    ? [
+                                        const Color(0xFF2A2A2A),
+                                        const Color(0xFF1F1F1F),
+                                      ]
                                     : [Colors.white, const Color(0xFFFAFAFA)],
                               ),
                               borderRadius: BorderRadius.circular(20),
@@ -446,7 +570,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                       height: 24,
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                          colors: [
+                                            Color(0xFFD4AF37),
+                                            Color(0xFFFFD700),
+                                          ],
                                         ),
                                         borderRadius: BorderRadius.circular(2),
                                       ),
@@ -457,7 +584,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : Colors.black,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
                                       ),
                                     ),
                                   ],
@@ -465,29 +594,29 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                 const SizedBox(height: 20),
                                 _buildDetailRow(
                                   icon: Icons.category,
-                                  label: 'Genre',
-                                  value: 'Fantasi',
+                                  label: 'Penerbit',
+                                  value: widget.book?.publisher ?? 'N/A',
                                   isDarkMode: isDarkMode,
                                 ),
                                 const SizedBox(height: 16),
                                 _buildDetailRow(
-                                  icon: Icons.calendar_today,
-                                  label: 'Tahun Terbit',
-                                  value: '1997',
+                                  icon: Icons.numbers,
+                                  label: 'ISBN',
+                                  value: widget.book?.isbn ?? 'N/A',
                                   isDarkMode: isDarkMode,
                                 ),
                                 const SizedBox(height: 16),
                                 _buildDetailRow(
-                                  icon: Icons.menu_book,
-                                  label: 'Jumlah Halaman',
-                                  value: '500 Halaman',
+                                  icon: Icons.format_align_left,
+                                  label: 'Format',
+                                  value: widget.book?.format ?? 'Digital',
                                   isDarkMode: isDarkMode,
                                 ),
                                 const SizedBox(height: 16),
                                 _buildDetailRow(
-                                  icon: Icons.language,
-                                  label: 'Bahasa',
-                                  value: 'Indonesia',
+                                  icon: Icons.star,
+                                  label: 'Rating',
+                                  value: '${widget.book?.rating ?? 0.0}/5.0',
                                   isDarkMode: isDarkMode,
                                 ),
                               ],
@@ -548,7 +677,11 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.shopping_bag, color: Colors.black, size: 22),
+                            Icon(
+                              Icons.shopping_bag,
+                              color: Colors.black,
+                              size: 22,
+                            ),
                             SizedBox(width: 10),
                             Text(
                               'Beli Sekarang',
@@ -567,7 +700,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   const SizedBox(width: 12),
                   Container(
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                      color: isDarkMode
+                          ? const Color(0xFF2A2A2A)
+                          : const Color(0xFFF5F5F5),
                       borderRadius: BorderRadius.circular(15),
                       border: Border.all(
                         color: const Color(0xFFD4AF37),
