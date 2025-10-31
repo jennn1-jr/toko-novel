@@ -111,7 +111,7 @@ class _CartPageState extends State<CartPage> {
           },
         ),
         title: const Text(
-          'SMART',
+          'Keranjang',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
