@@ -8,6 +8,7 @@ import 'package:tokonovel/profile_page.dart';
 import 'package:tokonovel/theme.dart';
 import 'package:tokonovel/all_book_page.dart';
 import 'package:tokonovel/debug_firestore_page.dart';
+import 'package:tokonovel/models/book_model.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -26,8 +27,11 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isPaused = false;
   String _userName = "User"; // Default name
 
-  final List<Book> _allBooks = [
-    Book(
+  final List<BookModel> _allBooks = [
+    BookModel(
+      id: '1',
+      genreId: '1',
+      slug: 'harry-potter',
       title: "Harry Potter",
       author: "by J. K. Rowling",
       rating: 5.0,
@@ -36,7 +40,10 @@ class _DashboardPageState extends State<DashboardPage> {
           "Masuki dunia sihir penuh petualangan dan misteri bersama Harry Potter.",
       imageUrl: "assets/images/harry_potter.png",
     ),
-    Book(
+    BookModel(
+      id: '2',
+      genreId: '2',
+      slug: 'solo-leveling',
       title: "Solo Leveling",
       author: "by Chugong",
       rating: 4.9,
@@ -44,7 +51,10 @@ class _DashboardPageState extends State<DashboardPage> {
       description: "Petualangan Sung Jin-Woo dari terlemah menjadi terkuat.",
       imageUrl: "assets/images/solo_leveling.png",
     ),
-    Book(
+    BookModel(
+      id: '3',
+      genreId: '3',
+      slug: 'laskar-pelangi',
       title: "Laskar Pelangi",
       author: "by Andrea Hirata",
       rating: 4.8,
@@ -52,7 +62,10 @@ class _DashboardPageState extends State<DashboardPage> {
       description: "Kisah inspiratif anak-anak Belitong yang penuh semangat.",
       imageUrl: "assets/images/laskar_pelangi.png",
     ),
-    Book(
+    BookModel(
+      id: '4',
+      genreId: '1',
+      slug: 'the-lord-of-the-rings',
       title: "The Lord of the Rings",
       author: "by J.R.R. Tolkien",
       rating: 5.0,
@@ -61,7 +74,10 @@ class _DashboardPageState extends State<DashboardPage> {
           "Epik fantasi legendaris tentang perjalanan heroik menghancurkan cincin.",
       imageUrl: "assets/images/lotr.png",
     ),
-    Book(
+    BookModel(
+      id: '5',
+      genreId: '4',
+      slug: 'dilan-1990',
       title: "Dilan 1990",
       author: "by Pidi Baiq",
       rating: 4.7,
@@ -69,7 +85,10 @@ class _DashboardPageState extends State<DashboardPage> {
       description: "Kisah romansa manis di era 90-an yang penuh kenangan.",
       imageUrl: "assets/images/dilan.png",
     ),
-    Book(
+    BookModel(
+      id: '6',
+      genreId: '3',
+      slug: 'bumi-manusia',
       title: "Bumi Manusia",
       author: "by Pramoedya Ananta Toer",
       rating: 4.9,
@@ -78,7 +97,10 @@ class _DashboardPageState extends State<DashboardPage> {
           "Kisah Minke di tengah pusaran perubahan sosial dan politik Hindia Belanda.",
       imageUrl: "assets/images/bumi_manusia.png",
     ),
-    Book(
+    BookModel(
+      id: '7',
+      genreId: '3',
+      slug: 'cantik-itu-luka',
       title: "Cantik Itu Luka",
       author: "by Eka Kurniawan",
       rating: 4.8,
@@ -87,7 +109,10 @@ class _DashboardPageState extends State<DashboardPage> {
           "Kisah tragis dan magis seorang wanita dan kutukan kecantikannya.",
       imageUrl: "assets/images/cantik_itu_luka.png",
     ),
-    Book(
+    BookModel(
+      id: '8',
+      genreId: '3',
+      slug: 'negeri-5-menara',
       title: "Negeri 5 Menara",
       author: "by Ahmad Fuadi",
       rating: 4.7,
@@ -96,7 +121,10 @@ class _DashboardPageState extends State<DashboardPage> {
           "Perjuangan enam santri dari berbagai daerah untuk meraih mimpi mereka.",
       imageUrl: "assets/images/negeri_5_menara.png",
     ),
-    Book(
+    BookModel(
+      id: '9',
+      genreId: '4',
+      slug: 'perahu-kertas',
       title: "Perahu Kertas",
       author: "by Dee Lestari",
       rating: 4.6,
@@ -105,7 +133,10 @@ class _DashboardPageState extends State<DashboardPage> {
           "Kisah tentang takdir, cinta, dan impian yang terjalin rumit.",
       imageUrl: "assets/images/perahu_kertas.png",
     ),
-    Book(
+    BookModel(
+      id: '10',
+      genreId: '3',
+      slug: 'ronggeng-dukuh-paruk',
       title: "Ronggeng Dukuh Paruk",
       author: "by Ahmad Tohari",
       rating: 4.8,
@@ -115,7 +146,7 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
   ];
 
-  List<Book> _filteredBooks = []; // List to hold filtered books
+  List<BookModel> _filteredBooks = []; // List to hold filtered books
 
   final List<Category> categories = [
     Category(name: "All", icon: Icons.apps),
@@ -239,7 +270,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withAlpha(
-                          int.parse((0.1 * 255).round().toString()),
+                          (0.1 * 255).round(),
                         ), // Replaced withOpacity
                         blurRadius: 10,
                         offset: const Offset(0, 2),
@@ -370,7 +401,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             borderRadius: BorderRadius.circular(25),
                             border: Border.all(
                               color: const Color(0xFFD4AF37).withAlpha(
-                                int.parse((0.3 * 255).round().toString()),
+                                (0.3 * 255).round(),
                               ), // Replaced withOpacity
                               width: 1.5,
                             ),
@@ -424,7 +455,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: const Color(0xFFD4AF37).withAlpha(
-                              int.parse((0.3 * 255).round().toString()),
+                              (0.3 * 255).round(),
                             ), // Replaced withOpacity
                             width: 1.5,
                           ),
@@ -453,7 +484,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: const Color(0xFFD4AF37).withAlpha(
-                              int.parse((0.3 * 255).round().toString()),
+                              (0.3 * 255).round(),
                             ), // Replaced withOpacity
                             width: 1.5,
                           ),
@@ -507,14 +538,14 @@ class _DashboardPageState extends State<DashboardPage> {
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
                       color: const Color(0xFFD4AF37).withAlpha(
-                        int.parse((0.2 * 255).round().toString()),
+                        (0.2 * 255).round(),
                       ), // Replaced withOpacity
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFFD4AF37).withAlpha(
-                          int.parse((0.1 * 255).round().toString()),
+                          (0.1 * 255).round(),
                         ), // Replaced withOpacity
                         blurRadius: 30,
                         offset: const Offset(0, 10),
@@ -565,7 +596,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFFD4AF37).withAlpha(
-                                int.parse((0.4 * 255).round().toString()),
+                                (0.4 * 255).round(),
                               ), // Replaced withOpacity
                               blurRadius: 20,
                               offset: const Offset(0, 8),
@@ -737,7 +768,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               ? [
                                   BoxShadow(
                                     color: const Color(0xFFD4AF37).withAlpha(
-                                      int.parse((0.5 * 255).round().toString()),
+                                      (0.5 * 255).round(),
                                     ), // Replaced withOpacity
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
@@ -827,7 +858,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF1B5E20).withAlpha(
-                            int.parse((0.4 * 255).round().toString()),
+                            (0.4 * 255).round(),
                           ), // Replaced withOpacity
                           blurRadius: 30,
                           offset: const Offset(0, 10),
@@ -840,7 +871,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: Colors.white.withAlpha(
-                              int.parse((0.2 * 255).round().toString()),
+                              (0.2 * 255).round(),
                             ), // Replaced withOpacity
                             shape: BoxShape.circle,
                           ),
@@ -898,7 +929,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(0xFFD4AF37).withAlpha(
-                                  int.parse((0.5 * 255).round().toString()),
+                                  (0.5 * 255).round(),
                                 ), // Replaced withOpacity
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
@@ -985,30 +1016,12 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-class Book {
-  final String title;
-  final String author;
-  final double rating;
-  final String voters;
-  final String description;
-  final String imageUrl;
-
-  Book({
-    required this.title,
-    required this.author,
-    required this.rating,
-    required this.voters,
-    required this.description,
-    required this.imageUrl,
-  });
-}
-
 class BookCard extends StatelessWidget {
-  final Book book;
+  final BookModel book;
   final bool isDarkMode;
 
   const BookCard({Key? key, required this.book, required this.isDarkMode})
-    : super(key: key);
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1025,14 +1038,14 @@ class BookCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: const Color(0xFFD4AF37).withAlpha(
-            int.parse((0.3 * 255).round().toString()),
+            (0.3 * 255).round(),
           ), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(
-              int.parse((0.2 * 255).round().toString()),
+              (0.2 * 255).round(),
             ), // Replaced withOpacity
             blurRadius: 20,
             offset: const Offset(0, 8),
@@ -1089,7 +1102,7 @@ class BookCard extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withAlpha(
-                              int.parse((0.3 * 255).round().toString()),
+                              (0.3 * 255).round(),
                             ), // Replaced withOpacity
                             blurRadius: 8,
                             offset: const Offset(0, 2),
@@ -1151,7 +1164,7 @@ class BookCard extends StatelessWidget {
                         Icon(Icons.people, color: Colors.grey[500], size: 14),
                         const SizedBox(width: 6),
                         Text(
-                          book.voters,
+                          book.voters ?? '',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[500],
@@ -1170,7 +1183,7 @@ class BookCard extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFFD4AF37).withAlpha(
-                              int.parse((0.4 * 255).round().toString()),
+                              (0.4 * 255).round(),
                             ), // Replaced withOpacity
                             blurRadius: 8,
                             offset: const Offset(0, 4),
@@ -1280,14 +1293,14 @@ class CategoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: const Color(0xFFD4AF37).withAlpha(
-            int.parse((0.3 * 255).round().toString()),
+            (0.3 * 255).round(),
           ), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(
-              int.parse((0.1 * 255).round().toString()),
+              (0.1 * 255).round(),
             ), // Replaced withOpacity
             blurRadius: 10,
             offset: const Offset(0, 4),
@@ -1338,7 +1351,7 @@ class CategoryCard extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFFD4AF37).withAlpha(
-                        int.parse((0.3 * 255).round().toString()),
+                        (0.3 * 255).round(),
                       ), // Replaced withOpacity
                       blurRadius: 10,
                       offset: const Offset(0, 4),

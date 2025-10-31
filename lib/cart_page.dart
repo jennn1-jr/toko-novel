@@ -1,301 +1,351 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Keranjang Buku',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        primaryColor: Colors.amber,
-      ),
-      home: const CartPage(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class CartItem {
-  final String title;
-  final String author;
-  final String price;
-  final String imageUrl;
-  int quantity;
-
-  CartItem({
-    required this.title,
-    required this.author,
-    required this.price,
-    required this.imageUrl,
-    this.quantity = 1,
-  });
-}
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:tokonovel/services/firestore_service.dart';
+import 'package:tokonovel/models/book_model.dart';
+import 'package:tokonovel/theme.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({Key? key}) : super(key: key);
 
   @override
-  State<CartPage> createState() => _CartPageState();
+  _CartPageState createState() => _CartPageState();
 }
 
 class _CartPageState extends State<CartPage> {
-  List<CartItem> cartItems = [
-    CartItem(
-      title: 'Lintang Kemukus',
-      author: 'Ahmad Tohari',
-      price: 'Rp 85.000',
-      imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400',
-    ),
-    CartItem(
-      title: 'Pulang',
-      author: 'Tere Liye',
-      price: 'Rp 95.000',
-      imageUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400',
-    ),
-    CartItem(
-      title: 'Bumi',
-      author: 'Tere Liye',
-      price: 'Rp 78.000',
-      imageUrl: 'https://images.unsplash.com/photo-1589998059171-988d887df646?w=400',
-    ),
-    CartItem(
-      title: 'Dilan 1990',
-      author: 'Pidi Baiq',
-      price: 'Rp 89.000',
-      imageUrl: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400',
-    ),
-  ];
-
-  double getTotalPrice() {
-    double total = 0;
-    for (var item in cartItems) {
-      String priceStr = item.price.replaceAll('Rp ', '').replaceAll('.', '');
-      total += double.parse(priceStr) * item.quantity;
-    }
-    return total;
-  }
-
-  void removeItem(int index) {
-    setState(() {
-      cartItems.removeAt(index);
-    });
-  }
-
-  void updateQuantity(int index, int delta) {
-    setState(() {
-      cartItems[index].quantity += delta;
-      if (cartItems[index].quantity < 1) {
-        cartItems[index].quantity = 1;
-      }
-    });
-  }
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E1E),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: const Text(
-          'Keranjang',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.shopping_cart, color: Colors.white),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Cart Items Section
-          Expanded(
-            flex: 7,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Keranjang Buku Anda',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+    return ValueListenableBuilder<Color>(
+      valueListenable: backgroundColorNotifier,
+      builder: (context, backgroundColor, child) {
+        final isDarkMode = backgroundColor == const Color(0xFF1A1A1A);
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          body: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                backgroundColor: isDarkMode ? Colors.black : Colors.white,
+                elevation: 0,
+                pinned: true,
+                floating: false,
+                toolbarHeight: 80,
+                automaticallyImplyLeading: false,
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.black : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(
+                          (0.1 * 255).round(),
                         ),
-                      ),
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            cartItems.clear();
-                          });
-                        },
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        label: const Text(
-                          'Hapus Semua',
-                          style: TextStyle(color: Colors.red),
-                        ),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                 ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: cartItems.length,
-                    itemBuilder: (context, index) {
-                      return CartItemCard(
-                        item: cartItems[index],
-                        onRemove: () => removeItem(index),
-                        onQuantityChanged: (delta) => updateQuantity(index, delta),
+                title: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32.0,
+                    vertical: 12.0,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.shopping_cart,
+                          color: Colors.black,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'KERANJANG',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                titleSpacing: 0,
+              ),
+              SliverToBoxAdapter(
+                child: StreamBuilder<List<BookModel>>(
+                  stream: _firestoreService.getCartStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Keranjang Anda kosong.',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
                       );
-                    },
-                  ),
+                    }
+
+                    final cartItems = snapshot.data!;
+                    double totalPrice = cartItems.fold(
+                        0, (sum, item) => sum + (item.price ?? 0));
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 7,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Keranjang Buku Anda',
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () {
+                                        _firestoreService.clearCart();
+                                      },
+                                      icon: const Icon(Icons.delete_outline,
+                                          color: Colors.red),
+                                      label: const Text(
+                                        'Hapus Semua',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                itemCount: cartItems.length,
+                                itemBuilder: (context, index) {
+                                  final item = cartItems[index];
+                                  return CartItemCard(
+                                    item: item,
+                                    onRemove: () =>
+                                        _firestoreService.removeFromCart(item),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 350,
+                          color: isDarkMode
+                              ? const Color(0xFF1A1A1A)
+                              : const Color(0xFFF5F5F5),
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Ringkasan Pesanan',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Subtotal',
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 14),
+                                  ),
+                                  Text(
+                                    'Rp ${totalPrice.toStringAsFixed(0)}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Biaya Pengiriman',
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 14),
+                                  ),
+                                  Text(
+                                    'Rp 15.000',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Divider(color: Colors.grey),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Total',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rp ${(totalPrice + 15000).toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      color: Colors.amber,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 32),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _showQrCode(context, cartItems,
+                                        totalPrice + 15000);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.amber,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Lanjutkan Pembayaran',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          
-          // Summary Section
-          Container(
-            width: 350,
-            color: const Color(0xFF1A1A1A),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Ringkasan Pesanan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Subtotal',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                    Text(
-                      'Rp ${getTotalPrice().toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'Biaya Pengiriman',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                    Text(
-                      'Rp 15.000',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(color: Colors.grey),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Rp ${(getTotalPrice() + 15000).toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
-                      style: const TextStyle(
-                        color: Colors.amber,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Lanjutkan Pembayaran',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        );
+      },
+    );
+  }
+
+  void _showQrCode(
+      BuildContext context, List<BookModel> items, double total) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Scan QR Code for Payment'),
+        content: SizedBox(
+          width: 250,
+          height: 250,
+          child: QrImageView(
+            data: 'Payment for ${items.length} books, total: Rp $total',
+            version: QrVersions.auto,
+            size: 200.0,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _generatePdf(items, total);
+            },
+            child: const Text('Generate Receipt'),
           ),
         ],
       ),
     );
   }
+
+  Future<void> _generatePdf(List<BookModel> items, double total) async {
+    final doc = pw.Document();
+
+    doc.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Receipt', style: pw.TextStyle(fontSize: 24)),
+              pw.SizedBox(height: 20),
+              pw.Text('Items:'),
+              ...items.map((item) => pw.Text(
+                  '${item.title} - Rp ${item.price?.toStringAsFixed(0)}')),
+              pw.SizedBox(height: 20),
+              pw.Text('Total: Rp ${total.toStringAsFixed(0)}'),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => doc.save());
+  }
 }
 
 class CartItemCard extends StatelessWidget {
-  final CartItem item;
+  final BookModel item;
   final VoidCallback onRemove;
-  final Function(int) onQuantityChanged;
 
   const CartItemCard({
     Key? key,
     required this.item,
     required this.onRemove,
-    required this.onQuantityChanged,
   }) : super(key: key);
 
   @override
@@ -309,11 +359,10 @@ class CartItemCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Book Cover
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
-              item.imageUrl,
+              item.imageUrl ?? '',
               width: 80,
               height: 110,
               fit: BoxFit.cover,
@@ -328,14 +377,12 @@ class CartItemCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          
-          // Book Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title,
+                  item.title ?? '',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -344,7 +391,7 @@ class CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  item.author,
+                  item.author ?? '',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[400],
@@ -352,7 +399,7 @@ class CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  item.price,
+                  'Rp ${item.price?.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -362,32 +409,6 @@ class CartItemCard extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Quantity Controls
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => onQuantityChanged(-1),
-                icon: const Icon(Icons.remove_circle_outline, color: Colors.grey),
-                iconSize: 24,
-              ),
-              Text(
-                '${item.quantity}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              IconButton(
-                onPressed: () => onQuantityChanged(1),
-                icon: const Icon(Icons.add_circle_outline, color: Colors.amber),
-                iconSize: 24,
-              ),
-            ],
-          ),
-          
-          // Remove Button
           IconButton(
             onPressed: onRemove,
             icon: const Icon(Icons.delete_outline, color: Colors.red),

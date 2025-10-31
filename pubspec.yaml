@@ -16,6 +16,9 @@ dependencies:
   flutter_svg: ^2.0.0+1
   cupertino_icons: ^1.0.8
   url_launcher: ^6.2.1
+  qr_flutter: ^4.0.0
+  pdf: ^3.10.1
+  printing: ^5.10.0
 
 dev_dependencies:
   flutter_test:

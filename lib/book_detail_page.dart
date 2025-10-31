@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokonovel/services/firestore_service.dart';
 import 'package:tokonovel/theme.dart';
 import 'models/book_model.dart';
 import 'utils/image_proxy.dart';
@@ -34,6 +35,7 @@ class BookDetailPage extends StatefulWidget {
 }
 
 class _BookDetailPageState extends State<BookDetailPage> {
+  final FirestoreService _firestoreService = FirestoreService();
   bool isFavorite = false;
 
   @override
@@ -187,8 +189,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       color: isFavorite
                           ? null
                           : (isDarkMode
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFF5F5F5)),
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5)),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: const Color(0xFFD4AF37).withOpacity(0.3),
@@ -298,26 +300,26 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stackTrace) {
-                                              return Container(
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    begin: Alignment.topLeft,
-                                                    end: Alignment.bottomRight,
-                                                    colors: [
-                                                      Colors.grey[800]!,
-                                                      Colors.grey[900]!,
-                                                    ],
-                                                  ),
-                                                ),
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.book,
-                                                    size: 80,
-                                                    color: Colors.white54,
-                                                  ),
-                                                ),
-                                              );
-                                            },
+                                          return Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  Colors.grey[800]!,
+                                                  Colors.grey[900]!,
+                                                ],
+                                              ),
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.book,
+                                                size: 80,
+                                                color: Colors.white54,
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
                               ),
                             ),
@@ -665,7 +667,17 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          if (widget.book != null) {
+                            _firestoreService.addToCart(widget.book!);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Buku ditambahkan ke keranjang'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -710,7 +722,17 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ),
                     ),
                     child: IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        if (widget.book != null) {
+                          _firestoreService.addToCart(widget.book!);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Buku ditambahkan ke keranjang'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
                       padding: const EdgeInsets.all(16),
                       icon: const Icon(
                         Icons.shopping_cart_outlined,
