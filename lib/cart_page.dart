@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:tokonovel/utils/image_proxy.dart';
 import 'package:tokonovel/services/firestore_service.dart';
 import 'package:tokonovel/models/book_model.dart';
 import 'package:tokonovel/theme.dart';
@@ -288,23 +289,42 @@ class _CartPageState extends State<CartPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Scan QR Code for Payment'),
-        content: SizedBox(
-          width: 250,
-          height: 250,
-          child: QrImageView(
-            data: 'Payment for ${items.length} books, total: Rp $total',
-            version: QrVersions.auto,
-            size: 200.0,
-          ),
+        title: const Text('Scan Qr untuk Melakukan Pembayaran'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 250,
+              height: 250,
+              child: QrImageView(
+                data: 'Payment for ${items.length} books, total: Rp $total',
+                version: QrVersions.auto,
+                size: 200.0,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Total Belanja: Rp ${total.toStringAsFixed(0)}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
+            },
+            child: const Text('Kembali ke Cart'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
               _generatePdf(items, total);
             },
-            child: const Text('Generate Receipt'),
+            child: const Text('Cetak Struk'),
           ),
         ],
       ),
@@ -313,6 +333,7 @@ class _CartPageState extends State<CartPage> {
 
   Future<void> _generatePdf(List<BookModel> items, double total) async {
     final doc = pw.Document();
+    final now = DateTime.now();
 
     doc.addPage(
       pw.Page(
@@ -320,13 +341,68 @@ class _CartPageState extends State<CartPage> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text('Receipt', style: pw.TextStyle(fontSize: 24)),
+              pw.Header(
+                level: 0,
+                child: pw.Text(
+                  'Struk Pembayaran',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
               pw.SizedBox(height: 20),
-              pw.Text('Items:'),
-              ...items.map((item) => pw.Text(
-                  '${item.title} - Rp ${item.price?.toStringAsFixed(0)}')),
+              pw.Table.fromTextArray(
+                headers: ['Item', 'Harga'],
+                data: items
+                    .map((item) => [
+                          item.title ?? '',
+                          'Rp ${item.price?.toStringAsFixed(0)}'
+                        ])
+                    .toList(),
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                cellAlignment: pw.Alignment.centerLeft,
+                headerDecoration: const pw.BoxDecoration(
+                  color: PdfColors.grey300,
+                ),
+                border: pw.TableBorder.all(),
+              ),
               pw.SizedBox(height: 20),
-              pw.Text('Total: Rp ${total.toStringAsFixed(0)}'),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Biaya Pengiriman:'),
+                  pw.Text('Rp 15.000'),
+                ],
+              ),
+              pw.Divider(),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Total:',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                  pw.Text(
+                    'Rp ${total.toStringAsFixed(0)}',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 40),
+              pw.Center(
+                child: pw.Text(
+                  'Terima kasih telah berbelanja!',
+                  style: pw.TextStyle(font: pw.Font.helveticaBoldOblique()),
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Center(
+                child: pw.Text(
+                  'Tanggal: ${now.day}/${now.month}/${now.year}',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ),
             ],
           );
         },
@@ -362,7 +438,7 @@ class CartItemCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
-              item.imageUrl ?? '',
+              coverProxy(item.imageUrl ?? ''),
               width: 80,
               height: 110,
               fit: BoxFit.cover,
