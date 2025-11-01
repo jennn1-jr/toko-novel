@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -48,7 +50,8 @@ class AboutUsPage extends StatefulWidget {
   State<AboutUsPage> createState() => _AboutUsPageState();
 }
 
-class _AboutUsPageState extends State<AboutUsPage> with SingleTickerProviderStateMixin {
+class _AboutUsPageState extends State<AboutUsPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
@@ -79,8 +82,8 @@ class _AboutUsPageState extends State<AboutUsPage> with SingleTickerProviderStat
         name: 'Jenar Aditiya Bagaskara',
         role: 'Team Leader',
         imageUrl: 'https://i.pravatar.cc/150?img=1',
-        instagram: '@arifmuftie',
-        github: 'arifmuftie',
+        instagram: 'https://www.instagram.com/jenar_aditiya/',
+        github: 'https://github.com/jennn1-jr',
         description: 'Memimpin tim dengan visi yang jelas',
       ),
       TeamMember(
@@ -166,7 +169,8 @@ class _AboutUsPageState extends State<AboutUsPage> with SingleTickerProviderStat
                   color: Colors.black.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                child:
+                    const Icon(Icons.arrow_back, color: Colors.white, size: 20),
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -208,7 +212,8 @@ class _AboutUsPageState extends State<AboutUsPage> with SingleTickerProviderStat
                             final index = entry.key;
                             final member = entry.value;
                             return TweenAnimationBuilder<double>(
-                              duration: Duration(milliseconds: 500 + (index * 100)),
+                              duration:
+                                  Duration(milliseconds: 500 + (index * 100)),
                               tween: Tween(begin: 0.0, end: 1.0),
                               curve: Curves.easeOutBack,
                               builder: (context, value, child) {
@@ -220,8 +225,8 @@ class _AboutUsPageState extends State<AboutUsPage> with SingleTickerProviderStat
                                       width: constraints.maxWidth > 800
                                           ? (constraints.maxWidth - 60) / 3
                                           : constraints.maxWidth > 500
-                                          ? (constraints.maxWidth - 40) / 2
-                                          : constraints.maxWidth,
+                                              ? (constraints.maxWidth - 40) / 2
+                                              : constraints.maxWidth,
                                       child: TeamMemberCard(member: member),
                                     ),
                                   ),
@@ -405,6 +410,10 @@ class _AboutUsPageState extends State<AboutUsPage> with SingleTickerProviderStat
   }
 }
 
+// ==================================================================
+// KODE YANG DIPERBARUI (IKON + FUNGSI KLIK)
+// ==================================================================
+
 class TeamMemberCard extends StatefulWidget {
   final TeamMember member;
 
@@ -416,6 +425,29 @@ class TeamMemberCard extends StatefulWidget {
 
 class _TeamMemberCardState extends State<TeamMemberCard> {
   bool _isHovered = false;
+
+  // Fungsi untuk membuka URL
+  Future<void> _launchSocialUrl(String url) async {
+    // Kita tambahkan prefix https:// jika belum ada
+    String fullUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      fullUrl = 'https://$url';
+    }
+    
+    final Uri uri = Uri.parse(fullUrl);
+    
+    // Gunakan mode externalApplication agar membuka di browser/aplikasi
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // Tampilkan pesan error jika gagal membuka link
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tidak bisa membuka link: $fullUrl')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -435,13 +467,13 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
               end: Alignment.bottomRight,
               colors: _isHovered
                   ? [
-                const Color(0xFF2A2A2A),
-                const Color(0xFF1F1F1F),
-              ]
+                      const Color(0xFF2A2A2A),
+                      const Color(0xFF1F1F1F),
+                    ]
                   : [
-                const Color(0xFF1F1F1F),
-                const Color(0xFF1A1A1A),
-              ],
+                      const Color(0xFF1F1F1F),
+                      const Color(0xFF1A1A1A),
+                    ],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
@@ -574,7 +606,8 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
 
               // Role Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -619,18 +652,22 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildSocialButton(
-                    icon: Icons.camera_alt,
+                    icon: FontAwesomeIcons.instagram,
                     color: Colors.pink,
                     onTap: () {
-                      // Launch Instagram
+                      // Ambil username dari data member dan buat URL
+                      String username = widget.member.instagram.replaceAll('@', '');
+                      _launchSocialUrl('instagram.com/$username');
                     },
                   ),
                   const SizedBox(width: 16),
                   _buildSocialButton(
-                    icon: Icons.code,
+                    icon: FontAwesomeIcons.github,
                     color: Colors.purple,
                     onTap: () {
-                      // Launch GitHub
+                      // Ambil username dari data member dan buat URL
+                      String username = widget.member.github;
+                      _launchSocialUrl('github.com/$username');
                     },
                   ),
                 ],
@@ -648,7 +685,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
     required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: onTap, // onTap sekarang memanggil fungsi _launchSocialUrl
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.all(12),
