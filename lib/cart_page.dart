@@ -87,7 +87,10 @@ class _CartPageState extends State<CartPage> {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.arrow_back),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
                         onPressed: () {
                           Navigator.pop(context);
                         },
@@ -108,10 +111,16 @@ class _CartPageState extends State<CartPage> {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     }
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'Keranjang Anda kosong.',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Text(
+                            'Keranjang Anda kosong.',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.grey[600] : Colors.grey[800],
+                            ),
+                          ),
                         ),
                       );
                     }
@@ -134,11 +143,12 @@ class _CartPageState extends State<CartPage> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Keranjang Buku Anda',
                                       style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
+                                        color: isDarkMode ? Colors.white : Colors.black,
                                       ),
                                     ),
                                     TextButton.icon(
@@ -164,6 +174,7 @@ class _CartPageState extends State<CartPage> {
                                   final item = cartItems[index];
                                   return CartItemCard(
                                     item: item,
+                                    isDarkMode: isDarkMode,
                                     onRemove: () =>
                                         _firestoreService.removeFromCart(item),
                                   );
@@ -175,17 +186,18 @@ class _CartPageState extends State<CartPage> {
                         Container(
                           width: 350,
                           color: isDarkMode
-                              ? const Color(0xFF1A1A1A)
+                              ? const Color.fromARGB(255, 44, 43, 43)
                               : const Color(0xFFF5F5F5),
                           padding: const EdgeInsets.all(24),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Ringkasan Pesanan',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white : Colors.black,
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -193,45 +205,54 @@ class _CartPageState extends State<CartPage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Subtotal',
                                     style: TextStyle(
-                                        color: Colors.grey, fontSize: 14),
+                                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                        fontSize: 14),
                                   ),
                                   Text(
                                     'Rp ${totalPrice.toStringAsFixed(0)}',
-                                    style: const TextStyle(fontSize: 14),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              const Row(
+                              Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Biaya Pengiriman',
                                     style: TextStyle(
-                                        color: Colors.grey, fontSize: 14),
+                                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                        fontSize: 14),
                                   ),
                                   Text(
                                     'Rp 15.000',
-                                    style: TextStyle(fontSize: 14),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              const Divider(color: Colors.grey),
+                              Divider(color: isDarkMode ? Colors.grey[800] : Colors.grey[300]),
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Total',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
+                                      color: isDarkMode ? Colors.white : Colors.black,
                                     ),
                                   ),
                                   Text(
@@ -417,11 +438,13 @@ class _CartPageState extends State<CartPage> {
 class CartItemCard extends StatelessWidget {
   final BookModel item;
   final VoidCallback onRemove;
+  final bool isDarkMode;
 
   const CartItemCard({
     Key? key,
     required this.item,
     required this.onRemove,
+    required this.isDarkMode,
   }) : super(key: key);
 
   @override
@@ -430,8 +453,15 @@ class CartItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -446,8 +476,8 @@ class CartItemCard extends StatelessWidget {
                 return Container(
                   width: 80,
                   height: 110,
-                  color: Colors.grey[800],
-                  child: const Icon(Icons.book, size: 40, color: Colors.grey),
+                  color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                  child: Icon(Icons.book, size: 40, color: isDarkMode ? Colors.grey[600] : Colors.grey[400]),
                 );
               },
             ),
@@ -459,10 +489,10 @@ class CartItemCard extends StatelessWidget {
               children: [
                 Text(
                   item.title ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -470,7 +500,7 @@ class CartItemCard extends StatelessWidget {
                   item.author ?? '',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey[400],
+                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
                 const SizedBox(height: 8),
