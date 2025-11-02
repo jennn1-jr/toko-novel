@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:tokonovel/book_detail_page.dart';
 import 'package:tokonovel/about_page.dart';
 import 'package:tokonovel/cart_page.dart';
+import 'package:tokonovel/collection_page.dart';
 import 'package:tokonovel/profile_page.dart';
 import 'package:tokonovel/theme.dart';
 import 'package:tokonovel/all_book_page.dart';
@@ -232,7 +233,12 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 2) {
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CollectionPage()),
+      );
+    } else if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CartPage()),

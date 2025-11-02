@@ -123,6 +123,74 @@ class FirestoreService {
     });
   }
 
+  // --- Operasi CRUD Koleksi ---
+
+  // Menambahkan buku ke koleksi
+  Future<void> addToCollection(String bookId) async {
+    final userId = getCurrentUserId();
+    if (userId == null) throw Exception("User not logged in");
+    await usersCollection.doc(userId).update({
+      'collection': FieldValue.arrayUnion([bookId])
+    });
+  }
+
+  // Menghapus buku dari koleksi
+  Future<void> removeFromCollection(String bookId) async {
+    final userId = getCurrentUserId();
+    if (userId == null) throw Exception("User not logged in");
+    await usersCollection.doc(userId).update({
+      'collection': FieldValue.arrayRemove([bookId])
+    });
+  }
+
+  // Cek apakah buku ada di koleksi
+  Stream<bool> isBookInCollection(String bookId) {
+    final userId = getCurrentUserId();
+    if (userId == null) return Stream.value(false);
+    return usersCollection.doc(userId).snapshots().map((snapshot) {
+      if (snapshot.exists) {
+        final userProfile = snapshot.data();
+        return userProfile?.collection.contains(bookId) ?? false;
+      }
+      return false;
+    });
+  }
+
+  // Menghapus semua item dari koleksi
+  Future<void> clearCollection() async {
+    final userId = getCurrentUserId();
+    if (userId == null) throw Exception("User not logged in");
+    await usersCollection.doc(userId).update({'collection': []});
+  }
+
+
+  // Mendapatkan semua buku dalam koleksi
+  Stream<List<BookModel>> getCollection(String userId) {
+    return usersCollection.doc(userId).snapshots().asyncMap((snapshot) async {
+      if (snapshot.exists) {
+        final userProfile = snapshot.data();
+        final bookIds = userProfile?.collection ?? [];
+        if (bookIds.isEmpty) {
+          return [];
+        }
+
+        final bookFutures = bookIds.map((bookId) {
+          return booksCollection.doc(bookId).get();
+        }).toList();
+
+        final bookSnapshots = await Future.wait(bookFutures);
+
+        return bookSnapshots
+            .where((snap) => snap.exists)
+            .map((snap) => snap.data()!)
+            .where((book) => book != null)
+            .toList();
+      }
+      return [];
+    });
+  }
+
+
   // --- Tambahan ---
   // DELETE Akun User (Firebase Auth & Profil Firestore)
   Future<void> deleteUserAccount() async {

@@ -180,34 +180,48 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       vertical: 12,
                       horizontal: 12,
                     ),
-                    decoration: BoxDecoration(
-                      gradient: isFavorite
-                          ? const LinearGradient(
-                              colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                            )
-                          : null,
-                      color: isFavorite
-                          ? null
-                          : (isDarkMode
-                              ? const Color(0xFF2A2A2A)
-                              : const Color(0xFFF5F5F5)),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFD4AF37).withOpacity(0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite
-                            ? Colors.black
-                            : (isDarkMode ? Colors.white : Colors.black),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          isFavorite = !isFavorite;
-                        });
+                    child: StreamBuilder<bool>(
+                      stream: widget.book != null
+                          ? _firestoreService.isBookInCollection(widget.book!.id)
+                          : Stream.value(false),
+                      builder: (context, snapshot) {
+                        final isFavorite = snapshot.data ?? false;
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: isFavorite
+                                ? const LinearGradient(
+                                    colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                  )
+                                : null,
+                            color: isFavorite
+                                ? null
+                                : (isDarkMode
+                                    ? const Color(0xFF2A2A2A)
+                                    : const Color(0xFFF5F5F5)),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFD4AF37).withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: isFavorite
+                                  ? Colors.black
+                                  : (isDarkMode ? Colors.white : Colors.black),
+                            ),
+                            onPressed: () {
+                              if (widget.book != null) {
+                                if (isFavorite) {
+                                  _firestoreService.removeFromCollection(widget.book!.id);
+                                } else {
+                                  _firestoreService.addToCollection(widget.book!.id);
+                                }
+                              }
+                            },
+                          ),
+                        );
                       },
                     ),
                   ),
