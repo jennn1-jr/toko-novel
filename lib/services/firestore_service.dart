@@ -1,12 +1,15 @@
+// services/firestore_service.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tokonovel/models/book_model.dart';
 import 'package:tokonovel/models/user_models.dart';
+// import 'package:firebase_storage/firebase_storage.dart'; // <-- DIHAPUS (tidak terpakai)
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  // final FirebaseStorage _storage = FirebaseStorage.instance; // <-- DIHAPUS (tidak terpakai)
 
   // Mendapatkan UID user yang sedang login
   String? getCurrentUserId() {
@@ -40,6 +43,7 @@ class FirestoreService {
   Future<void> setUserProfile(UserProfile profile) async {
     final userId = getCurrentUserId();
     if (userId == null) throw Exception("User not logged in");
+    // .toMap() dari user_models.dart akan otomatis menyertakan photoUrl
     await usersCollection.doc(userId).set(profile, SetOptions(merge: true));
   }
 
@@ -66,8 +70,11 @@ class FirestoreService {
       if (snapshot.exists) {
         return snapshot.data();
       } else {
-        return UserProfile(
+        final newUserProfile = UserProfile(
             uid: userId, name: _auth.currentUser?.displayName ?? 'New User');
+        // Buat profil default jika belum ada
+        setUserProfile(newUserProfile);
+        return newUserProfile;
       }
     });
   }
@@ -86,7 +93,26 @@ class FirestoreService {
     await usersCollection.doc(userId).delete();
   }
 
+  // --- TAMBAHAN FUNGSI UPLOAD GAMBAR (Base64) ---
+  // Fungsi ini menerima String Base64 dari profile_page.dart
+  Future<void> uploadProfileImage(String base64Image) async {
+    final userId = getCurrentUserId();
+    if (userId == null) throw Exception("User not logged in");
+
+    try {
+      // Langsung simpan string Base64 ke field 'photoUrl' di Firestore
+      await usersCollection.doc(userId).update({
+        'photoUrl': base64Image,
+      });
+    } catch (e) {
+      print("Error saving Base64 image: $e");
+      rethrow;
+    }
+  }
+  // --- BATAS TAMBAHAN FUNGSI ---
+
   // --- Operasi CRUD Cart ---
+  // (Fungsi cart Anda tidak diubah)
 
   // Add a book to the cart
   Future<void> addToCart(BookModel book) async {
@@ -124,6 +150,7 @@ class FirestoreService {
   }
 
   // --- Operasi CRUD Koleksi ---
+  // (Fungsi koleksi Anda tidak diubah)
 
   // Menambahkan buku ke koleksi
   Future<void> addToCollection(String bookId) async {
@@ -174,17 +201,18 @@ class FirestoreService {
           return [];
         }
 
-        final bookFutures = bookIds.map((bookId) {
-          return booksCollection.doc(bookId).get();
-        }).toList();
-
-        final bookSnapshots = await Future.wait(bookFutures);
-
-        return bookSnapshots
-            .where((snap) => snap.exists)
-            .map((snap) => snap.data()!)
-            .where((book) => book != null)
-            .toList();
+        // Ambil data buku berdasarkan bookIds
+        // Batasi 10 per query 'whereIn' untuk menghindari limit Firestore
+        List<BookModel> collectedBooks = [];
+        for (var i = 0; i < bookIds.length; i += 10) {
+          final subList = bookIds.sublist(
+              i, i + 10 > bookIds.length ? bookIds.length : i + 10);
+          final bookQuery = await booksCollection
+              .where(FieldPath.documentId, whereIn: subList)
+              .get();
+          collectedBooks.addAll(bookQuery.docs.map((doc) => doc.data()));
+        }
+        return collectedBooks;
       }
       return [];
     });

@@ -1,6 +1,12 @@
+// profile_page.dart (LENGKAP DAN SUDAH DIPERBAIKI)
+
+import 'dart:convert'; // <-- 1. IMPORT DIPERLUKAN
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tokonovel/login_register.dart'; // Import halaman login
+import 'package:image_picker/image_picker.dart'; // <-- 2. IMPORT DIPERLUKAN
+import 'package:image/image.dart' as img; // <-- 3. IMPORT DIPERLUKAN
+import 'package:tokonovel/login_register.dart';
 import 'package:tokonovel/models/user_models.dart';
 import 'package:tokonovel/theme.dart';
 import 'services/firestore_service.dart';
@@ -18,12 +24,9 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _nameController;
   late TextEditingController _bioController;
   bool _isLoading = false;
-  bool _isEditing = false; // State untuk mode edit
-
-  // --- PALET WARNA TEMA "NOVELKU" ---
-  // Warna spesifik sekarang akan mengikuti ValueNotifier di `theme.dart`
-  // (Dashboard menggunakan `backgroundColorNotifier` sehingga profil akan sama)
-  // --- END OF PALET WARNA ---
+  bool _isEditing = false;
+  
+  final ImagePicker _picker = ImagePicker(); // <-- 4. VARIABEL DIPERLUKAN
 
   @override
   void initState() {
@@ -39,16 +42,17 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
-  // --- FUNGSI LOGIKA (TIDAK BERUBAH) ---
+  // --- FUNGSI LOGIKA (DIPERBAIKI) ---
   Future<void> _saveProfile(UserProfile currentProfile) async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        final updatedProfile = UserProfile(
-          uid: currentProfile.uid,
+        // 5. DIPERBAIKI: Menggunakan copyWith agar photoUrl tidak hilang
+        final updatedProfile = currentProfile.copyWith(
           name: _nameController.text.trim(),
           bio: _bioController.text.trim(),
         );
+
         await _firestoreService.setUserProfile(updatedProfile);
 
         final user = FirebaseAuth.instance.currentUser;
@@ -59,9 +63,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Profil berhasil diperbarui'),
-            backgroundColor: Colors.green,
-          ),
+              content: Text('Profil berhasil diperbarui'),
+              backgroundColor: Colors.green),
         );
         setState(() {
           _isEditing = false;
@@ -69,9 +72,8 @@ class _ProfilePageState extends State<ProfilePage> {
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal memperbarui profil: $e'),
-            backgroundColor: Colors.red,
-          ),
+              content: Text('Gagal memperbarui profil: $e'),
+              backgroundColor: Colors.red),
         );
       } finally {
         setState(() => _isLoading = false);
@@ -79,46 +81,102 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // --- 6. FUNGSI BARU UNTUK PILIH & UPLOAD GAMBAR ---
+  Future<void> _pickAndUploadImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // 1. Pilih Gambar
+    final XFile? imageFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (imageFile == null) return; // User membatalkan
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Baca file sebagai bytes
+      final Uint8List imageBytes = await imageFile.readAsBytes();
+
+      // 3. RESIZE GAMBAR (SANGAT PENTING!)
+      img.Image? originalImage = img.decodeImage(imageBytes);
+      if (originalImage == null) {
+        throw Exception("Format gambar tidak didukung");
+      }
+      
+      // Resize ke lebar 300px (kualitas akan turun, tapi aman untuk Firestore)
+      img.Image resizedImage = img.copyResize(originalImage, width: 300);
+      
+      // Ubah kembali ke Uint8List (sebagai JPEG terkompresi)
+      final Uint8List resizedBytes =
+          Uint8List.fromList(img.encodeJpg(resizedImage, quality: 85));
+
+      // 4. Ubah ke Base64
+      String base64Image = base64Encode(resizedBytes);
+
+      // 5. Panggil service untuk menyimpan string Base64
+      // Sesuai firestore_service.dart Anda, fungsi ini hanya perlu 1 argumen
+      await _firestoreService.uploadProfileImage(base64Image); 
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto profil berhasil diperbarui!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengunggah foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+  // --- BATAS FUNGSI BARU ---
+
   Future<void> _deleteAccount() async {
+    // ... (Fungsi _deleteAccount Anda sudah benar, tidak diubah) ...
     final bool confirm =
         await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            // Ambil tema saat ini dari notifier agar dialog ikut mode gelap/terang
-            final bg = backgroundColorNotifier.value;
-            final isDark = bg == const Color(0xFF1A1A1A);
-            final dialogBg = isDark
-                ? const Color(0xFF2A2A2A)
-                : const Color(0xFFF5F5F5);
-            final secondaryText = isDark
-                ? Colors.grey[400]!
-                : Colors.grey[700]!;
-            final errorColor = Colors.red[400]!;
+      context: context,
+      builder: (context) {
+        final bg = backgroundColorNotifier.value;
+        final isDark = bg == const Color(0xFF1A1A1A);
+        final dialogBg = isDark
+            ? const Color(0xFF2A2A2A)
+            : const Color(0xFFF5F5F5);
+        final secondaryText = isDark
+            ? Colors.grey[400]!
+            : Colors.grey[700]!;
+        final errorColor = Colors.red[400]!;
 
-            return AlertDialog(
-              backgroundColor: dialogBg,
-              title: Text(
-                'Hapus Akun',
-                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-              ),
-              content: Text(
-                'Apakah Anda yakin ingin menghapus akun Anda secara permanen? Tindakan ini tidak dapat diurungkan.',
-                style: TextStyle(color: secondaryText),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text('Batal', style: TextStyle(color: secondaryText)),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: Text('Hapus', style: TextStyle(color: errorColor)),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
+        return AlertDialog(
+          backgroundColor: dialogBg,
+          title: Text(
+            'Hapus Akun',
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus akun Anda secara permanen? Tindakan ini tidak dapat diurungkan.',
+            style: TextStyle(color: secondaryText),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Batal', style: TextStyle(color: secondaryText)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Hapus', style: TextStyle(color: errorColor)),
+            ),
+          ],
+        );
+      },
+    ) ??
+    false;
 
     if (confirm) {
       setState(() => _isLoading = true);
@@ -127,9 +185,8 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Akun berhasil dihapus'),
-              backgroundColor: Colors.green,
-            ),
+                content: Text('Akun berhasil dihapus'),
+                backgroundColor: Colors.green),
           );
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -140,9 +197,8 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Gagal menghapus akun: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
+                content: Text('Gagal menghapus akun: ${e.toString()}'),
+                backgroundColor: Colors.red),
           );
         }
       } finally {
@@ -170,45 +226,41 @@ class _ProfilePageState extends State<ProfilePage> {
         final Color textColor = isDarkMode ? Colors.white : Colors.black87;
 
         return Scaffold(
-          // --- UI SCAFFOLD DIUBAH ---
           backgroundColor: backgroundColor,
           appBar: AppBar(
             title: Text('Profil Pengguna', style: TextStyle(color: textColor)),
-            // Mengubah warna panah kembali
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: primaryColor),
               onPressed: () => Navigator.of(context).pop(),
             ),
             backgroundColor: backgroundColor,
-            elevation: 0, // Hapus bayangan app bar
+            elevation: 0,
             actionsIconTheme: IconThemeData(
               color: primaryColor,
-            ), // Ubah warna ikon di actions
-            // --- END OF UI APPBAR ---
+            ),
             actions: [
               StreamBuilder<UserProfile?>(
-                stream: _firestoreService.getUserProfileStream(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || snapshot.data == null) {
-                    return const SizedBox.shrink();
-                  }
-                  final userProfile = snapshot.data!;
-                  return IconButton(
-                    icon: Icon(_isEditing ? Icons.save : Icons.edit),
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            if (_isEditing) {
-                              _saveProfile(userProfile);
-                            } else {
-                              _nameController.text = userProfile.name;
-                              _bioController.text = userProfile.bio;
-                              setState(() => _isEditing = true);
-                            }
-                          },
-                  );
-                },
-              ),
+                  stream: _firestoreService.getUserProfileStream(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData || snapshot.data == null) {
+                      return const SizedBox.shrink();
+                    }
+                    final userProfile = snapshot.data!;
+                    return IconButton(
+                      icon: Icon(_isEditing ? Icons.save : Icons.edit),
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              if (_isEditing) {
+                                _saveProfile(userProfile);
+                              } else {
+                                _nameController.text = userProfile.name;
+                                _bioController.text = userProfile.bio;
+                                setState(() => _isEditing = true);
+                              }
+                            },
+                    );
+                  }),
               IconButton(
                 icon: const Icon(Icons.logout),
                 onPressed: () async {
@@ -226,27 +278,22 @@ class _ProfilePageState extends State<ProfilePage> {
             stream: _firestoreService.getUserProfileStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                // --- UI LOADING DIUBAH ---
                 return Center(
-                  child: CircularProgressIndicator(color: primaryColor),
-                );
+                    child: CircularProgressIndicator(color: primaryColor));
               }
               if (snapshot.hasError) {
-                // --- UI ERROR DIUBAH ---
                 return Center(
-                  child: Text(
-                    'Error: ${snapshot.error}',
-                    style: TextStyle(color: secondaryTextColor),
-                  ),
-                );
+                    child: Text(
+                  'Error: ${snapshot.error}',
+                  style: TextStyle(color: secondaryTextColor),
+                ));
               }
               if (!snapshot.hasData || snapshot.data == null) {
                 return Center(
-                  child: Text(
-                    'Profil tidak ditemukan.',
-                    style: TextStyle(color: secondaryTextColor),
-                  ),
-                );
+                    child: Text(
+                  'Profil tidak ditemukan.',
+                  style: TextStyle(color: secondaryTextColor),
+                ));
               }
 
               final userProfile = snapshot.data!;
@@ -254,6 +301,20 @@ class _ProfilePageState extends State<ProfilePage> {
                 _nameController.text = userProfile.name;
                 _bioController.text = userProfile.bio;
               }
+
+              // --- 7. LOGIKA BARU UNTUK DECODE GAMBAR BASE64 ---
+              final bool hasPhotoData = userProfile.photoUrl.isNotEmpty;
+              Uint8List? photoBytes;
+              if (hasPhotoData) {
+                try {
+                  // Coba decode string Base64
+                  photoBytes = base64Decode(userProfile.photoUrl);
+                } catch (e) {
+                  print("Gagal decode Base64: $e");
+                  photoBytes = null; // Gagal decode, anggap tidak ada foto
+                }
+              }
+              // --- BATAS LOGIKA BARU ---
 
               return Stack(
                 children: [
@@ -266,28 +327,26 @@ class _ProfilePageState extends State<ProfilePage> {
                           Center(
                             child: Stack(
                               children: [
-                                // --- UI AVATAR DIUBAH ---
+                                // --- 8. UI AVATAR DIPERBAIKI ---
                                 CircleAvatar(
                                   radius: 52,
                                   backgroundColor: primaryColor,
                                   child: CircleAvatar(
                                     radius: 50,
                                     backgroundColor: textFieldColor,
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 50,
-                                      color: primaryColor,
-                                    ),
-                                    // Uncomment di bawah jika Anda punya photoUrl
-                                    // backgroundImage: (userProfile.photoUrl != null && userProfile.photoUrl!.isNotEmpty)
-                                    //     ? NetworkImage(userProfile.photoUrl!)
-                                    //     : null,
-                                    // child: (userProfile.photoUrl != null && userProfile.photoUrl!.isNotEmpty)
-                                    //     ? null
-                                    //     : Icon(Icons.person, size: 50, color: kPrimaryColor),
+                                    backgroundImage: (photoBytes != null)
+                                        ? MemoryImage(photoBytes) // Tampilkan gambar
+                                        : null,
+                                    child: (photoBytes != null)
+                                        ? null // Sembunyikan ikon jika ada gambar
+                                        : Icon(
+                                            Icons.person,
+                                            size: 50,
+                                            color: primaryColor,
+                                          ),
                                   ),
                                 ),
-                                // --- UI TOMBOL EDIT FOTO DIUBAH ---
+                                // --- 9. TOMBOL KAMERA DIPERBAIKI ---
                                 if (_isEditing)
                                   Positioned(
                                     bottom: 0,
@@ -301,17 +360,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                           color: backgroundColor,
                                           size: 18,
                                         ),
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Fitur ganti foto belum diimplementasikan.',
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                        // Panggil fungsi upload yang benar
+                                        onPressed: _isLoading
+                                            ? null
+                                            : _pickAndUploadImage,
                                       ),
                                     ),
                                   ),
@@ -320,7 +372,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 20),
 
-                          // --- UI TEXTFORMFIELD 'NAMA' DIUBAH ---
+                          // --- FORM 'NAMA' (Sudah Benar) ---
                           TextFormField(
                             controller: _nameController,
                             enabled: _isEditing,
@@ -364,7 +416,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 16),
 
-                          // --- UI TEXTFORMFIELD 'BIO' DIUBAH ---
+                          // --- FORM 'BIO' (Sudah Benar) ---
                           TextFormField(
                             controller: _bioController,
                             enabled: _isEditing,
@@ -403,7 +455,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 30),
 
-                          // --- UI TOMBOL HAPUS AKUN DIUBAH ---
+                          // --- TOMBOL HAPUS AKUN (Sudah Benar) ---
                           if (!_isEditing)
                             Center(
                               child: TextButton.icon(
@@ -418,9 +470,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 onPressed: _isLoading ? null : _deleteAccount,
                                 style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 12,
-                                  ),
+                                      horizontal: 20, vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30.0),
                                     side: BorderSide(color: Colors.red[400]!),
@@ -433,7 +483,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  // --- UI LOADING OVERLAY DIUBAH ---
+                  // --- LOADING OVERLAY (Sudah Benar) ---
                   if (_isLoading)
                     Container(
                       color: backgroundColor.withOpacity(0.7),
