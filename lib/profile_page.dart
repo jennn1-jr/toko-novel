@@ -25,7 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _bioController;
   bool _isLoading = false;
   bool _isEditing = false;
-  
+
   final ImagePicker _picker = ImagePicker(); // <-- 4. VARIABEL DIPERLUKAN
 
   @override
@@ -63,8 +63,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Profil berhasil diperbarui'),
-              backgroundColor: Colors.green),
+            content: Text('Profil berhasil diperbarui'),
+            backgroundColor: Colors.green,
+          ),
         );
         setState(() {
           _isEditing = false;
@@ -72,8 +73,9 @@ class _ProfilePageState extends State<ProfilePage> {
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Gagal memperbarui profil: $e'),
-              backgroundColor: Colors.red),
+            content: Text('Gagal memperbarui profil: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       } finally {
         setState(() => _isLoading = false);
@@ -103,20 +105,21 @@ class _ProfilePageState extends State<ProfilePage> {
       if (originalImage == null) {
         throw Exception("Format gambar tidak didukung");
       }
-      
+
       // Resize ke lebar 300px (kualitas akan turun, tapi aman untuk Firestore)
       img.Image resizedImage = img.copyResize(originalImage, width: 300);
-      
+
       // Ubah kembali ke Uint8List (sebagai JPEG terkompresi)
-      final Uint8List resizedBytes =
-          Uint8List.fromList(img.encodeJpg(resizedImage, quality: 85));
+      final Uint8List resizedBytes = Uint8List.fromList(
+        img.encodeJpg(resizedImage, quality: 85),
+      );
 
       // 4. Ubah ke Base64
       String base64Image = base64Encode(resizedBytes);
 
       // 5. Panggil service untuk menyimpan string Base64
       // Sesuai firestore_service.dart Anda, fungsi ini hanya perlu 1 argumen
-      await _firestoreService.uploadProfileImage(base64Image); 
+      await _firestoreService.uploadProfileImage(base64Image);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -141,42 +144,42 @@ class _ProfilePageState extends State<ProfilePage> {
     // ... (Fungsi _deleteAccount Anda sudah benar, tidak diubah) ...
     final bool confirm =
         await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        final bg = backgroundColorNotifier.value;
-        final isDark = bg == const Color(0xFF1A1A1A);
-        final dialogBg = isDark
-            ? const Color(0xFF2A2A2A)
-            : const Color(0xFFF5F5F5);
-        final secondaryText = isDark
-            ? Colors.grey[400]!
-            : Colors.grey[700]!;
-        final errorColor = Colors.red[400]!;
+          context: context,
+          builder: (context) {
+            final bg = backgroundColorNotifier.value;
+            final isDark = bg == const Color(0xFF1A1A1A);
+            final dialogBg = isDark
+                ? const Color(0xFF2A2A2A)
+                : const Color(0xFFF5F5F5);
+            final secondaryText = isDark
+                ? Colors.grey[400]!
+                : Colors.grey[700]!;
+            final errorColor = Colors.red[400]!;
 
-        return AlertDialog(
-          backgroundColor: dialogBg,
-          title: Text(
-            'Hapus Akun',
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus akun Anda secara permanen? Tindakan ini tidak dapat diurungkan.',
-            style: TextStyle(color: secondaryText),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Batal', style: TextStyle(color: secondaryText)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Hapus', style: TextStyle(color: errorColor)),
-            ),
-          ],
-        );
-      },
-    ) ??
-    false;
+            return AlertDialog(
+              backgroundColor: dialogBg,
+              title: Text(
+                'Hapus Akun',
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              ),
+              content: Text(
+                'Apakah Anda yakin ingin menghapus akun Anda secara permanen? Tindakan ini tidak dapat diurungkan.',
+                style: TextStyle(color: secondaryText),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Batal', style: TextStyle(color: secondaryText)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('Hapus', style: TextStyle(color: errorColor)),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
 
     if (confirm) {
       setState(() => _isLoading = true);
@@ -185,8 +188,9 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Akun berhasil dihapus'),
-                backgroundColor: Colors.green),
+              content: Text('Akun berhasil dihapus'),
+              backgroundColor: Colors.green,
+            ),
           );
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -197,8 +201,9 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Gagal menghapus akun: ${e.toString()}'),
-                backgroundColor: Colors.red),
+              content: Text('Gagal menghapus akun: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } finally {
@@ -235,32 +240,31 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             backgroundColor: backgroundColor,
             elevation: 0,
-            actionsIconTheme: IconThemeData(
-              color: primaryColor,
-            ),
+            actionsIconTheme: IconThemeData(color: primaryColor),
             actions: [
               StreamBuilder<UserProfile?>(
-                  stream: _firestoreService.getUserProfileStream(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data == null) {
-                      return const SizedBox.shrink();
-                    }
-                    final userProfile = snapshot.data!;
-                    return IconButton(
-                      icon: Icon(_isEditing ? Icons.save : Icons.edit),
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              if (_isEditing) {
-                                _saveProfile(userProfile);
-                              } else {
-                                _nameController.text = userProfile.name;
-                                _bioController.text = userProfile.bio;
-                                setState(() => _isEditing = true);
-                              }
-                            },
-                    );
-                  }),
+                stream: _firestoreService.getUserProfileStream(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.data == null) {
+                    return const SizedBox.shrink();
+                  }
+                  final userProfile = snapshot.data!;
+                  return IconButton(
+                    icon: Icon(_isEditing ? Icons.save : Icons.edit),
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            if (_isEditing) {
+                              _saveProfile(userProfile);
+                            } else {
+                              _nameController.text = userProfile.name;
+                              _bioController.text = userProfile.bio;
+                              setState(() => _isEditing = true);
+                            }
+                          },
+                  );
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.logout),
                 onPressed: () async {
@@ -279,21 +283,24 @@ class _ProfilePageState extends State<ProfilePage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
-                    child: CircularProgressIndicator(color: primaryColor));
+                  child: CircularProgressIndicator(color: primaryColor),
+                );
               }
               if (snapshot.hasError) {
                 return Center(
-                    child: Text(
-                  'Error: ${snapshot.error}',
-                  style: TextStyle(color: secondaryTextColor),
-                ));
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
+                );
               }
               if (!snapshot.hasData || snapshot.data == null) {
                 return Center(
-                    child: Text(
-                  'Profil tidak ditemukan.',
-                  style: TextStyle(color: secondaryTextColor),
-                ));
+                  child: Text(
+                    'Profil tidak ditemukan.',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
+                );
               }
 
               final userProfile = snapshot.data!;
@@ -335,7 +342,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                     radius: 50,
                                     backgroundColor: textFieldColor,
                                     backgroundImage: (photoBytes != null)
-                                        ? MemoryImage(photoBytes) // Tampilkan gambar
+                                        ? MemoryImage(
+                                            photoBytes,
+                                          ) // Tampilkan gambar
                                         : null,
                                     child: (photoBytes != null)
                                         ? null // Sembunyikan ikon jika ada gambar
@@ -470,7 +479,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 onPressed: _isLoading ? null : _deleteAccount,
                                 style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 12),
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30.0),
                                     side: BorderSide(color: Colors.red[400]!),

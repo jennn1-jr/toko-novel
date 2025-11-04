@@ -40,9 +40,7 @@ class _CartPageState extends State<CartPage> {
                     color: isDarkMode ? Colors.black : Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(
-                          (0.1 * 255).round(),
-                        ),
+                        color: Colors.black.withAlpha((0.1 * 255).round()),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -118,7 +116,9 @@ class _CartPageState extends State<CartPage> {
                             'Keranjang Anda kosong.',
                             style: TextStyle(
                               fontSize: 18,
-                              color: isDarkMode ? Colors.grey[600] : Colors.grey[800],
+                              color: isDarkMode
+                                  ? Colors.grey[600]
+                                  : Colors.grey[800],
                             ),
                           ),
                         ),
@@ -127,7 +127,9 @@ class _CartPageState extends State<CartPage> {
 
                     final cartItems = snapshot.data!;
                     double totalPrice = cartItems.fold(
-                        0, (sum, item) => sum + (item.price ?? 0));
+                      0,
+                      (sum, item) => sum + (item.price ?? 0),
+                    );
 
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,15 +150,19 @@ class _CartPageState extends State<CartPage> {
                                       style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : Colors.black,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
                                       ),
                                     ),
                                     TextButton.icon(
                                       onPressed: () {
                                         _firestoreService.clearCart();
                                       },
-                                      icon: const Icon(Icons.delete_outline,
-                                          color: Colors.red),
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red,
+                                      ),
                                       label: const Text(
                                         'Hapus Semua',
                                         style: TextStyle(color: Colors.red),
@@ -167,8 +173,9 @@ class _CartPageState extends State<CartPage> {
                               ),
                               ListView.builder(
                                 shrinkWrap: true,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                ),
                                 itemCount: cartItems.length,
                                 itemBuilder: (context, index) {
                                   final item = cartItems[index];
@@ -197,7 +204,9 @@ class _CartPageState extends State<CartPage> {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.white : Colors.black,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -208,14 +217,19 @@ class _CartPageState extends State<CartPage> {
                                   Text(
                                     'Subtotal',
                                     style: TextStyle(
-                                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                                        fontSize: 14),
+                                      color: isDarkMode
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
                                   ),
                                   Text(
                                     'Rp ${totalPrice.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : Colors.black87,
                                     ),
                                   ),
                                 ],
@@ -228,20 +242,29 @@ class _CartPageState extends State<CartPage> {
                                   Text(
                                     'Biaya Pengiriman',
                                     style: TextStyle(
-                                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                                        fontSize: 14),
+                                      color: isDarkMode
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
                                   ),
                                   Text(
                                     'Rp 15.000',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : Colors.black87,
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              Divider(color: isDarkMode ? Colors.grey[800] : Colors.grey[300]),
+                              Divider(
+                                color: isDarkMode
+                                    ? Colors.grey[800]
+                                    : Colors.grey[300],
+                              ),
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment:
@@ -252,7 +275,9 @@ class _CartPageState extends State<CartPage> {
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: isDarkMode ? Colors.white : Colors.black,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
                                     ),
                                   ),
                                   Text(
@@ -271,8 +296,11 @@ class _CartPageState extends State<CartPage> {
                                 height: 50,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    _showQrCode(context, cartItems,
-                                        totalPrice + 15000);
+                                    _showQrCode(
+                                      context,
+                                      cartItems,
+                                      totalPrice + 15000,
+                                    );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.amber,
@@ -305,8 +333,7 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  void _showQrCode(
-      BuildContext context, List<BookModel> items, double total) {
+  void _showQrCode(BuildContext context, List<BookModel> items, double total) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -326,10 +353,7 @@ class _CartPageState extends State<CartPage> {
             const SizedBox(height: 16),
             Text(
               'Total Belanja: Rp ${total.toStringAsFixed(0)}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -376,10 +400,12 @@ class _CartPageState extends State<CartPage> {
               pw.Table.fromTextArray(
                 headers: ['Item', 'Harga'],
                 data: items
-                    .map((item) => [
-                          item.title ?? '',
-                          'Rp ${item.price?.toStringAsFixed(0)}'
-                        ])
+                    .map(
+                      (item) => [
+                        item.title ?? '',
+                        'Rp ${item.price?.toStringAsFixed(0)}',
+                      ],
+                    )
                     .toList(),
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 cellAlignment: pw.Alignment.centerLeft,
@@ -391,10 +417,7 @@ class _CartPageState extends State<CartPage> {
               pw.SizedBox(height: 20),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Biaya Pengiriman:'),
-                  pw.Text('Rp 15.000'),
-                ],
+                children: [pw.Text('Biaya Pengiriman:'), pw.Text('Rp 15.000')],
               ),
               pw.Divider(),
               pw.Row(
@@ -431,7 +454,8 @@ class _CartPageState extends State<CartPage> {
     );
 
     await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => doc.save());
+      onLayout: (PdfPageFormat format) async => doc.save(),
+    );
   }
 }
 
@@ -477,7 +501,11 @@ class CartItemCard extends StatelessWidget {
                   width: 80,
                   height: 110,
                   color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                  child: Icon(Icons.book, size: 40, color: isDarkMode ? Colors.grey[600] : Colors.grey[400]),
+                  child: Icon(
+                    Icons.book,
+                    size: 40,
+                    color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                  ),
                 );
               },
             ),

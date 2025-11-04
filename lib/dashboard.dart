@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -10,6 +12,9 @@ import 'package:tokonovel/theme.dart';
 import 'package:tokonovel/all_book_page.dart';
 import 'package:tokonovel/debug_firestore_page.dart';
 import 'package:tokonovel/models/book_model.dart';
+import 'dart:convert';
+import 'package:tokonovel/models/user_models.dart';
+import 'package:tokonovel/services/firestore_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -22,11 +27,11 @@ class _DashboardPageState extends State<DashboardPage> {
   final ScrollController _scrollController = ScrollController();
   final PageController _pageController = PageController(viewportFraction: 0.35);
   final TextEditingController _searchController = TextEditingController();
+  final FirestoreService _firestoreService = FirestoreService();
   Timer? _autoScrollTimer;
   int _currentPage = 0;
   int _selectedIndex = 0;
   bool _isPaused = false;
-  String _userName = "User"; // Default name
 
   final List<BookModel> _allBooks = [
     BookModel(
@@ -165,22 +170,22 @@ class _DashboardPageState extends State<DashboardPage> {
       _allBooks,
     ); // Initialize filtered books with all books
     _startAutoScroll();
-    _loadUserName();
+    // _loadUserName();
     _searchController.addListener(
       _filterBooks,
     ); // Add listener for search input
   }
 
-  void _loadUserName() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null &&
-        user.displayName != null &&
-        user.displayName!.isNotEmpty) {
-      setState(() {
-        _userName = user.displayName!;
-      });
-    }
-  }
+  // void _loadUserName() {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   if (user != null &&
+  //       user.displayName != null &&
+  //       user.displayName!.isNotEmpty) {
+  //     setState(() {
+  //       _userName = user.displayName!;
+  //     });
+  //   }
+  // }
 
   void _filterBooks() {
     final query = _searchController.text.toLowerCase();
@@ -237,17 +242,17 @@ class _DashboardPageState extends State<DashboardPage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => CollectionPage()),
-      );
+      ).then((_) => setState(() => _selectedIndex = 0));
     } else if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CartPage()),
-      );
+      ).then((_) => setState(() => _selectedIndex = 0));
     } else if (index == 3) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AboutUsPage()),
-      );
+      ).then((_) => setState(() => _selectedIndex = 0));
     }
   }
 
@@ -385,72 +390,107 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                       const SizedBox(width: 24),
-                      GestureDetector(
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ProfilePage(),
+                      // Mengganti GestureDetector + Container dengan StreamBuilder
+                      StreamBuilder<UserProfile?>(
+                        stream: _firestoreService.getUserProfileStream(),
+                        builder: (context, snapshot) {
+                          // Tentukan nilai default
+                          String displayName = 'User';
+                          Uint8List? photoBytes;
+
+                          // Jika data sudah datang dari stream
+                          if (snapshot.hasData && snapshot.data != null) {
+                            final userProfile = snapshot.data!;
+                            displayName = userProfile.name.isNotEmpty
+                                ? userProfile.name
+                                : 'User';
+
+                            // Coba decode foto Base64
+                            if (userProfile.photoUrl.isNotEmpty) {
+                              try {
+                                photoBytes = base64Decode(userProfile.photoUrl);
+                              } catch (e) {
+                                print("Gagal decode foto di dashboard: $e");
+                                photoBytes = null; // Gagal, kembali ke default
+                              }
+                            }
+                          }
+
+                          // Tampilkan widget (GestureDetector)
+                          return GestureDetector(
+                            onTap: () {
+                              // Cukup navigasi, stream akan update otomatis
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ProfilePage(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDarkMode
+                                    ? const Color(0xFF2A2A2A)
+                                    : const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFD4AF37,
+                                  ).withAlpha((0.3 * 255).round()),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFFD4AF37),
+                                          Color(0xFFFFD700),
+                                        ],
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: CircleAvatar(
+                                      backgroundColor: isDarkMode
+                                          ? const Color(0xFF2A2A2A)
+                                          : Colors.white,
+                                      radius: 16,
+                                      // Logika untuk menampilkan foto
+                                      backgroundImage: (photoBytes != null)
+                                          ? MemoryImage(photoBytes)
+                                          : null,
+                                      child: (photoBytes != null)
+                                          ? null // Sembunyikan ikon jika ada foto
+                                          : const Icon(
+                                              Icons.person,
+                                              color: Color(0xFFD4AF37),
+                                              size: 18,
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    displayName, // Tampilkan nama dari stream
+                                    style: TextStyle(
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
-                          _loadUserName(); // Refresh name when returning from ProfilePage
                         },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFF5F5F5),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: const Color(0xFFD4AF37).withAlpha(
-                                (0.3 * 255).round(),
-                              ), // Replaced withOpacity
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFD4AF37),
-                                      Color(0xFFFFD700),
-                                    ],
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: CircleAvatar(
-                                  backgroundColor: isDarkMode
-                                      ? const Color(0xFF2A2A2A)
-                                      : Colors.white,
-                                  radius: 16,
-                                  child: const Icon(
-                                    Icons.person,
-                                    color: Color(0xFFD4AF37),
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                _userName, // Display the dynamic user name
-                                style: TextStyle(
-                                  color: isDarkMode
-                                      ? Colors.white
-                                      : Colors.black,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
                       const SizedBox(width: 12),
                       Container(
@@ -543,9 +583,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: const Color(0xFFD4AF37).withAlpha(
-                        (0.2 * 255).round(),
-                      ), // Replaced withOpacity
+                      color: const Color(
+                        0xFFD4AF37,
+                      ).withAlpha((0.2 * 255).round()), // Replaced withOpacity
                       width: 2,
                     ),
                     boxShadow: [
@@ -1027,7 +1067,7 @@ class BookCard extends StatelessWidget {
   final bool isDarkMode;
 
   const BookCard({Key? key, required this.book, required this.isDarkMode})
-      : super(key: key);
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1043,9 +1083,9 @@ class BookCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withAlpha(
-            (0.3 * 255).round(),
-          ), // Replaced withOpacity
+          color: const Color(
+            0xFFD4AF37,
+          ).withAlpha((0.3 * 255).round()), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
@@ -1298,9 +1338,9 @@ class CategoryCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFD4AF37).withAlpha(
-            (0.3 * 255).round(),
-          ), // Replaced withOpacity
+          color: const Color(
+            0xFFD4AF37,
+          ).withAlpha((0.3 * 255).round()), // Replaced withOpacity
           width: 1.5,
         ),
         boxShadow: [
@@ -1356,9 +1396,9 @@ class CategoryCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD4AF37).withAlpha(
-                        (0.3 * 255).round(),
-                      ), // Replaced withOpacity
+                      color: const Color(
+                        0xFFD4AF37,
+                      ).withAlpha((0.3 * 255).round()), // Replaced withOpacity
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
