@@ -82,7 +82,7 @@ class _AboutUsPageState extends State<AboutUsPage>
         name: 'Jenar Aditiya Bagaskara',
         role: 'Team Leader',
         imageUrl: 'https://i.pravatar.cc/150?img=1',
-        instagram: 'https://www.instagram.com/jenar_aditiya/',
+        instagram: '@jenar_aditiya',
         github: 'https://github.com/jennn1-jr',
         description: 'Memimpin tim dengan visi yang jelas',
       ),
@@ -92,7 +92,7 @@ class _AboutUsPageState extends State<AboutUsPage>
         imageUrl: 'https://i.pravatar.cc/150?img=2',
         instagram: '@dimsyog',
         github: 'dimsyog',
-        description: 'Spesialis UI/UX dan Frontend',
+        description: 'Fullstack',
       ),
       TeamMember(
         name: 'Izora Elverda',
@@ -100,7 +100,7 @@ class _AboutUsPageState extends State<AboutUsPage>
         imageUrl: 'https://i.pravatar.cc/150?img=3',
         instagram: '@yogaprtma',
         github: 'yogaprtma',
-        description: 'Ahli dalam sistem backend',
+        description: 'Spesialis UI/UX dan Frontend',
       ),
       TeamMember(
         name: 'Muhammad Dwi Saputri',
@@ -108,7 +108,7 @@ class _AboutUsPageState extends State<AboutUsPage>
         imageUrl: 'https://i.pravatar.cc/150?img=4',
         instagram: '@farhankrn',
         github: 'farhankrn',
-        description: 'Mengembangkan aplikasi mobile',
+        description: 'KING AI',
       ),
       TeamMember(
         name: 'Muhammad Dzacky M.Y',
