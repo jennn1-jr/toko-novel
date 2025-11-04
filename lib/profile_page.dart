@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tokonovel/login_register.dart'; // Import halaman login
 import 'package:tokonovel/models/user_models.dart';
+import 'package:tokonovel/theme.dart';
 import 'services/firestore_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -20,11 +21,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isEditing = false; // State untuk mode edit
 
   // --- PALET WARNA TEMA "NOVELKU" ---
-  static const Color kBackgroundColor = Color(0xFF121212);
-  static const Color kPrimaryColor = Color(0xFFFDE047); // Estimasi kuning
-  static const Color kSecondaryTextColor = Color(0xFFBDBDBD);
-  static const Color kTextFieldColor = Color(0xFF1E1E1E);
-  static const Color kErrorColor = Colors.red;
+  // Warna spesifik sekarang akan mengikuti ValueNotifier di `theme.dart`
+  // (Dashboard menggunakan `backgroundColorNotifier` sehingga profil akan sama)
   // --- END OF PALET WARNA ---
 
   @override
@@ -61,8 +59,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Profil berhasil diperbarui'),
-              backgroundColor: Colors.green),
+            content: Text('Profil berhasil diperbarui'),
+            backgroundColor: Colors.green,
+          ),
         );
         setState(() {
           _isEditing = false;
@@ -70,8 +69,9 @@ class _ProfilePageState extends State<ProfilePage> {
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Gagal memperbarui profil: $e'),
-              backgroundColor: Colors.red),
+            content: Text('Gagal memperbarui profil: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       } finally {
         setState(() => _isLoading = false);
@@ -80,30 +80,43 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _deleteAccount() async {
-    final bool confirm = await showDialog(
+    final bool confirm =
+        await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            // --- UI DIALOG DIUBAH ---
-            backgroundColor: kTextFieldColor,
-            title: const Text('Hapus Akun',
-                style: TextStyle(color: Colors.white)),
-            content: const Text(
-              'Apakah Anda yakin ingin menghapus akun Anda secara permanen? Tindakan ini tidak dapat diurungkan.',
-              style: TextStyle(color: kSecondaryTextColor),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Batal',
-                    style: TextStyle(color: kSecondaryTextColor)),
+          builder: (context) {
+            // Ambil tema saat ini dari notifier agar dialog ikut mode gelap/terang
+            final bg = backgroundColorNotifier.value;
+            final isDark = bg == const Color(0xFF1A1A1A);
+            final dialogBg = isDark
+                ? const Color(0xFF2A2A2A)
+                : const Color(0xFFF5F5F5);
+            final secondaryText = isDark
+                ? Colors.grey[400]!
+                : Colors.grey[700]!;
+            final errorColor = Colors.red[400]!;
+
+            return AlertDialog(
+              backgroundColor: dialogBg,
+              title: Text(
+                'Hapus Akun',
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Hapus', style: TextStyle(color: kErrorColor)),
+              content: Text(
+                'Apakah Anda yakin ingin menghapus akun Anda secara permanen? Tindakan ini tidak dapat diurungkan.',
+                style: TextStyle(color: secondaryText),
               ),
-            ],
-            // --- END OF UI DIALOG ---
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Batal', style: TextStyle(color: secondaryText)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('Hapus', style: TextStyle(color: errorColor)),
+                ),
+              ],
+            );
+          },
         ) ??
         false;
 
@@ -114,8 +127,9 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Akun berhasil dihapus'),
-                backgroundColor: Colors.green),
+              content: Text('Akun berhasil dihapus'),
+              backgroundColor: Colors.green,
+            ),
           );
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -126,8 +140,9 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Gagal menghapus akun: ${e.toString()}'),
-                backgroundColor: Colors.red),
+              content: Text('Gagal menghapus akun: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } finally {
@@ -141,241 +156,297 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // --- UI SCAFFOLD DIUBAH ---
-      backgroundColor: kBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Profil Pengguna',
-            style: TextStyle(color: Colors.white)),
-        // Mengubah warna panah kembali
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kPrimaryColor),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        backgroundColor: kBackgroundColor,
-        elevation: 0, // Hapus bayangan app bar
-        actionsIconTheme: const IconThemeData(
-            color: kPrimaryColor), // Ubah warna ikon di actions
-        // --- END OF UI APPBAR ---
-        actions: [
-          StreamBuilder<UserProfile?>(
-              stream: _firestoreService.getUserProfileStream(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData || snapshot.data == null) {
-                  return const SizedBox.shrink();
-                }
-                final userProfile = snapshot.data!;
-                return IconButton(
-                  icon: Icon(_isEditing ? Icons.save : Icons.edit),
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          if (_isEditing) {
-                            _saveProfile(userProfile);
-                          } else {
-                            _nameController.text = userProfile.name;
-                            _bioController.text = userProfile.bio;
-                            setState(() => _isEditing = true);
-                          }
-                        },
-                );
-              }),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
+    return ValueListenableBuilder<Color>(
+      valueListenable: backgroundColorNotifier,
+      builder: (context, backgroundColor, child) {
+        final isDarkMode = backgroundColor == const Color(0xFF1A1A1A);
+        final Color primaryColor = const Color(0xFFD4AF37);
+        final Color secondaryTextColor = isDarkMode
+            ? Colors.grey[400]!
+            : Colors.grey[700]!;
+        final Color textFieldColor = isDarkMode
+            ? const Color(0xFF2A2A2A)
+            : const Color(0xFFF5F5F5);
+        final Color textColor = isDarkMode ? Colors.white : Colors.black87;
+
+        return Scaffold(
+          // --- UI SCAFFOLD DIUBAH ---
+          backgroundColor: backgroundColor,
+          appBar: AppBar(
+            title: Text('Profil Pengguna', style: TextStyle(color: textColor)),
+            // Mengubah warna panah kembali
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: primaryColor),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            backgroundColor: backgroundColor,
+            elevation: 0, // Hapus bayangan app bar
+            actionsIconTheme: IconThemeData(
+              color: primaryColor,
+            ), // Ubah warna ikon di actions
+            // --- END OF UI APPBAR ---
+            actions: [
+              StreamBuilder<UserProfile?>(
+                stream: _firestoreService.getUserProfileStream(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.data == null) {
+                    return const SizedBox.shrink();
+                  }
+                  final userProfile = snapshot.data!;
+                  return IconButton(
+                    icon: Icon(_isEditing ? Icons.save : Icons.edit),
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            if (_isEditing) {
+                              _saveProfile(userProfile);
+                            } else {
+                              _nameController.text = userProfile.name;
+                              _bioController.text = userProfile.bio;
+                              setState(() => _isEditing = true);
+                            }
+                          },
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  if (mounted) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+          body: StreamBuilder<UserProfile?>(
+            stream: _firestoreService.getUserProfileStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                // --- UI LOADING DIUBAH ---
+                return Center(
+                  child: CircularProgressIndicator(color: primaryColor),
                 );
               }
-            },
-          ),
-        ],
-      ),
-      body: StreamBuilder<UserProfile?>(
-        stream: _firestoreService.getUserProfileStream(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            // --- UI LOADING DIUBAH ---
-            return const Center(
-                child: CircularProgressIndicator(color: kPrimaryColor));
-          }
-          if (snapshot.hasError) {
-            // --- UI ERROR DIUBAH ---
-            return Center(
-                child: Text('Error: ${snapshot.error}',
-                    style: const TextStyle(color: kSecondaryTextColor)));
-          }
-          if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(
-                child: Text('Profil tidak ditemukan.',
-                    style: TextStyle(color: kSecondaryTextColor)));
-          }
+              if (snapshot.hasError) {
+                // --- UI ERROR DIUBAH ---
+                return Center(
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data == null) {
+                return Center(
+                  child: Text(
+                    'Profil tidak ditemukan.',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
+                );
+              }
 
-          final userProfile = snapshot.data!;
-          if (!_isEditing) {
-            _nameController.text = userProfile.name;
-            _bioController.text = userProfile.bio;
-          }
+              final userProfile = snapshot.data!;
+              if (!_isEditing) {
+                _nameController.text = userProfile.name;
+                _bioController.text = userProfile.bio;
+              }
 
-          return Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: ListView(
-                    children: [
-                      Center(
-                        child: Stack(
-                          children: [
-                            // --- UI AVATAR DIUBAH ---
-                            CircleAvatar(
-                              radius: 52,
-                              backgroundColor: kPrimaryColor,
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor: kTextFieldColor,
-                                child: Icon(Icons.person,
-                                    size: 50, color: kPrimaryColor),
-                                // Uncomment di bawah jika Anda punya photoUrl
-                                // backgroundImage: (userProfile.photoUrl != null && userProfile.photoUrl!.isNotEmpty)
-                                //     ? NetworkImage(userProfile.photoUrl!)
-                                //     : null,
-                                // child: (userProfile.photoUrl != null && userProfile.photoUrl!.isNotEmpty)
-                                //     ? null
-                                //     : Icon(Icons.person, size: 50, color: kPrimaryColor),
+              return Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Form(
+                      key: _formKey,
+                      child: ListView(
+                        children: [
+                          Center(
+                            child: Stack(
+                              children: [
+                                // --- UI AVATAR DIUBAH ---
+                                CircleAvatar(
+                                  radius: 52,
+                                  backgroundColor: primaryColor,
+                                  child: CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: textFieldColor,
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: primaryColor,
+                                    ),
+                                    // Uncomment di bawah jika Anda punya photoUrl
+                                    // backgroundImage: (userProfile.photoUrl != null && userProfile.photoUrl!.isNotEmpty)
+                                    //     ? NetworkImage(userProfile.photoUrl!)
+                                    //     : null,
+                                    // child: (userProfile.photoUrl != null && userProfile.photoUrl!.isNotEmpty)
+                                    //     ? null
+                                    //     : Icon(Icons.person, size: 50, color: kPrimaryColor),
+                                  ),
+                                ),
+                                // --- UI TOMBOL EDIT FOTO DIUBAH ---
+                                if (_isEditing)
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: primaryColor,
+                                      child: IconButton(
+                                        icon: Icon(
+                                          Icons.camera_alt,
+                                          color: backgroundColor,
+                                          size: 18,
+                                        ),
+                                        onPressed: () {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Fitur ganti foto belum diimplementasikan.',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // --- UI TEXTFORMFIELD 'NAMA' DIUBAH ---
+                          TextFormField(
+                            controller: _nameController,
+                            enabled: _isEditing,
+                            style: TextStyle(color: textColor),
+                            decoration: InputDecoration(
+                              labelText: 'Nama',
+                              labelStyle: TextStyle(color: secondaryTextColor),
+                              prefixIcon: Icon(
+                                Icons.person_outline,
+                                color: primaryColor,
+                              ),
+                              filled: true,
+                              fillColor: textFieldColor,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(color: primaryColor),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!,
+                                ),
                               ),
                             ),
-                            // --- UI TOMBOL EDIT FOTO DIUBAH ---
-                            if (_isEditing)
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: kPrimaryColor,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.camera_alt,
-                                        color: kBackgroundColor, size: 18),
-                                    onPressed: () {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                'Fitur ganti foto belum diimplementasikan.')),
-                                      );
-                                    },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Nama tidak boleh kosong';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // --- UI TEXTFORMFIELD 'BIO' DIUBAH ---
+                          TextFormField(
+                            controller: _bioController,
+                            enabled: _isEditing,
+                            style: TextStyle(color: textColor),
+                            decoration: InputDecoration(
+                              labelText: 'Bio',
+                              labelStyle: TextStyle(color: secondaryTextColor),
+                              prefixIcon: Icon(
+                                Icons.info_outline,
+                                color: primaryColor,
+                              ),
+                              filled: true,
+                              fillColor: textFieldColor,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(color: primaryColor),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!,
+                                ),
+                              ),
+                            ),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 30),
+
+                          // --- UI TOMBOL HAPUS AKUN DIUBAH ---
+                          if (!_isEditing)
+                            Center(
+                              child: TextButton.icon(
+                                icon: Icon(
+                                  Icons.delete_forever,
+                                  color: Colors.red[400],
+                                ),
+                                label: Text(
+                                  'Hapus Akun',
+                                  style: TextStyle(color: Colors.red[400]),
+                                ),
+                                onPressed: _isLoading ? null : _deleteAccount,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30.0),
+                                    side: BorderSide(color: Colors.red[400]!),
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // --- UI TEXTFORMFIELD 'NAMA' DIUBAH ---
-                      TextFormField(
-                        controller: _nameController,
-                        enabled: _isEditing,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Nama',
-                          labelStyle:
-                              const TextStyle(color: kSecondaryTextColor),
-                          prefixIcon:
-                              const Icon(Icons.person_outline, color: kPrimaryColor),
-                          filled: true,
-                          fillColor: kTextFieldColor,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                            borderSide: BorderSide(color: Colors.grey[800]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                            borderSide: const BorderSide(color: kPrimaryColor),
-                          ),
-                          disabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                            borderSide: BorderSide(color: Colors.grey[800]!),
-                          ),
-                          errorStyle: const TextStyle(color: kErrorColor),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Nama tidak boleh kosong';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // --- UI TEXTFORMFIELD 'BIO' DIUBAH ---
-                      TextFormField(
-                        controller: _bioController,
-                        enabled: _isEditing,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Bio',
-                          labelStyle:
-                              const TextStyle(color: kSecondaryTextColor),
-                          prefixIcon:
-                              const Icon(Icons.info_outline, color: kPrimaryColor),
-                          filled: true,
-                          fillColor: kTextFieldColor,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                            borderSide: BorderSide(color: Colors.grey[800]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                            borderSide: const BorderSide(color: kPrimaryColor),
-                          ),
-                          disabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                            borderSide: BorderSide(color: Colors.grey[800]!),
-                          ),
-                        ),
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 30),
-
-                      // --- UI TOMBOL HAPUS AKUN DIUBAH ---
-                      if (!_isEditing)
-                        Center(
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.delete_forever,
-                                color: kErrorColor),
-                            label: const Text('Hapus Akun',
-                                style: TextStyle(color: kErrorColor)),
-                            onPressed: _isLoading ? null : _deleteAccount,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30.0),
-                                side: const BorderSide(color: kErrorColor)
-                              )
                             ),
-                          ),
-                        ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
 
-              // --- UI LOADING OVERLAY DIUBAH ---
-              if (_isLoading)
-                Container(
-                  color: kBackgroundColor.withOpacity(0.7),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: kPrimaryColor),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
+                  // --- UI LOADING OVERLAY DIUBAH ---
+                  if (_isLoading)
+                    Container(
+                      color: backgroundColor.withOpacity(0.7),
+                      child: Center(
+                        child: CircularProgressIndicator(color: primaryColor),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
