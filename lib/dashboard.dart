@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:tokonovel/book_detail_page.dart';
@@ -15,6 +15,7 @@ import 'package:tokonovel/models/book_model.dart';
 import 'dart:convert';
 import 'package:tokonovel/models/user_models.dart';
 import 'package:tokonovel/services/firestore_service.dart';
+import 'package:tokonovel/utils/image_proxy.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -28,131 +29,15 @@ class _DashboardPageState extends State<DashboardPage> {
   final PageController _pageController = PageController(viewportFraction: 0.35);
   final TextEditingController _searchController = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
   Timer? _autoScrollTimer;
   int _currentPage = 0;
   int _selectedIndex = 0;
   bool _isPaused = false;
+  bool _isLoadingBooks = true;
 
-  final List<BookModel> _allBooks = [
-    BookModel(
-      id: '1',
-      genreId: '1',
-      slug: 'harry-potter',
-      title: "Harry Potter",
-      author: "by J. K. Rowling",
-      rating: 5.0,
-      voters: "2,987 voters",
-      description:
-          "Masuki dunia sihir penuh petualangan dan misteri bersama Harry Potter.",
-      imageUrl: "assets/images/harry_potter.png",
-    ),
-    BookModel(
-      id: '2',
-      genreId: '2',
-      slug: 'solo-leveling',
-      title: "Solo Leveling",
-      author: "by Chugong",
-      rating: 4.9,
-      voters: "1,594 voters",
-      description: "Petualangan Sung Jin-Woo dari terlemah menjadi terkuat.",
-      imageUrl: "assets/images/solo_leveling.png",
-    ),
-    BookModel(
-      id: '3',
-      genreId: '3',
-      slug: 'laskar-pelangi',
-      title: "Laskar Pelangi",
-      author: "by Andrea Hirata",
-      rating: 4.8,
-      voters: "1,987 voters",
-      description: "Kisah inspiratif anak-anak Belitong yang penuh semangat.",
-      imageUrl: "assets/images/laskar_pelangi.png",
-    ),
-    BookModel(
-      id: '4',
-      genreId: '1',
-      slug: 'the-lord-of-the-rings',
-      title: "The Lord of the Rings",
-      author: "by J.R.R. Tolkien",
-      rating: 5.0,
-      voters: "3,421 voters",
-      description:
-          "Epik fantasi legendaris tentang perjalanan heroik menghancurkan cincin.",
-      imageUrl: "assets/images/lotr.png",
-    ),
-    BookModel(
-      id: '5',
-      genreId: '4',
-      slug: 'dilan-1990',
-      title: "Dilan 1990",
-      author: "by Pidi Baiq",
-      rating: 4.7,
-      voters: "2,156 voters",
-      description: "Kisah romansa manis di era 90-an yang penuh kenangan.",
-      imageUrl: "assets/images/dilan.png",
-    ),
-    BookModel(
-      id: '6',
-      genreId: '3',
-      slug: 'bumi-manusia',
-      title: "Bumi Manusia",
-      author: "by Pramoedya Ananta Toer",
-      rating: 4.9,
-      voters: "2,541 voters",
-      description:
-          "Kisah Minke di tengah pusaran perubahan sosial dan politik Hindia Belanda.",
-      imageUrl: "assets/images/bumi_manusia.png",
-    ),
-    BookModel(
-      id: '7',
-      genreId: '3',
-      slug: 'cantik-itu-luka',
-      title: "Cantik Itu Luka",
-      author: "by Eka Kurniawan",
-      rating: 4.8,
-      voters: "1,890 voters",
-      description:
-          "Kisah tragis dan magis seorang wanita dan kutukan kecantikannya.",
-      imageUrl: "assets/images/cantik_itu_luka.png",
-    ),
-    BookModel(
-      id: '8',
-      genreId: '3',
-      slug: 'negeri-5-menara',
-      title: "Negeri 5 Menara",
-      author: "by Ahmad Fuadi",
-      rating: 4.7,
-      voters: "2,333 voters",
-      description:
-          "Perjuangan enam santri dari berbagai daerah untuk meraih mimpi mereka.",
-      imageUrl: "assets/images/negeri_5_menara.png",
-    ),
-    BookModel(
-      id: '9',
-      genreId: '4',
-      slug: 'perahu-kertas',
-      title: "Perahu Kertas",
-      author: "by Dee Lestari",
-      rating: 4.6,
-      voters: "1,988 voters",
-      description:
-          "Kisah tentang takdir, cinta, dan impian yang terjalin rumit.",
-      imageUrl: "assets/images/perahu_kertas.png",
-    ),
-    BookModel(
-      id: '10',
-      genreId: '3',
-      slug: 'ronggeng-dukuh-paruk',
-      title: "Ronggeng Dukuh Paruk",
-      author: "by Ahmad Tohari",
-      rating: 4.8,
-      voters: "1,560 voters",
-      description: "Tragedi seorang penari ronggeng di tengah gejolak politik.",
-      imageUrl: "assets/images/ronggeng.png",
-    ),
-  ];
-
-  List<BookModel> _filteredBooks = []; // List to hold filtered books
+  late List<BookModel> _allBooks = [];
+  late List<BookModel> _filteredBooks = [];
 
   final List<Category> categories = [
     Category(name: "All", icon: Icons.apps),
@@ -166,26 +51,57 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _filteredBooks = List.from(
-      _allBooks,
-    ); // Initialize filtered books with all books
     _startAutoScroll();
-    // _loadUserName();
-    _searchController.addListener(
-      _filterBooks,
-    ); // Add listener for search input
+    _searchController.addListener(_filterBooks);
+    _loadPopularBooksFromFirestore();
   }
 
-  // void _loadUserName() {
-  //   final user = FirebaseAuth.instance.currentUser;
-  //   if (user != null &&
-  //       user.displayName != null &&
-  //       user.displayName!.isNotEmpty) {
-  //     setState(() {
-  //       _userName = user.displayName!;
-  //     });
-  //   }
-  // }
+  /// Load 5 random popular books from Firestore
+  Future<void> _loadPopularBooksFromFirestore() async {
+    try {
+      final slugs = [
+        'laskar-pelangi-edisi-50',
+        'dilan-dia-adalah-dilanku-tahun-1990',
+        'solo-leveling',
+        'seporsi-mie-ayam-sebelum-mati',
+        'the-lord-of-the-rings-kembalinya-sang-raja',
+      ];
+
+      final List<BookModel> books = [];
+
+      for (final slug in slugs) {
+        try {
+          final doc = await _db
+              .collection('books')
+              .where('slug', isEqualTo: slug)
+              .limit(1)
+              .get();
+
+          if (doc.docs.isNotEmpty) {
+            final bookData = doc.docs.first.data();
+            final book = BookModel.fromMap(bookData, doc.docs.first.id);
+            books.add(book);
+            print('DEBUG: Loaded book from DB: ${book.title}');
+          }
+        } catch (e) {
+          print('DEBUG: Error loading slug=$slug: $e');
+        }
+      }
+
+      setState(() {
+        _allBooks = books;
+        _filteredBooks = List.from(_allBooks);
+        _isLoadingBooks = false;
+      });
+
+      print('DEBUG: Total books loaded: ${_allBooks.length}');
+    } catch (e) {
+      print('ERROR loading books: $e');
+      setState(() {
+        _isLoadingBooks = false;
+      });
+    }
+  }
 
   void _filterBooks() {
     final query = _searchController.text.toLowerCase();
@@ -749,38 +665,59 @@ class _DashboardPageState extends State<DashboardPage> {
                   onExit: (_) => setState(() => _isPaused = false),
                   child: SizedBox(
                     height: 500,
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        setState(() => _currentPage = index);
-                      },
-                      itemCount: _filteredBooks.length, // Use filtered books
-                      itemBuilder: (context, index) {
-                        return AnimatedBuilder(
-                          animation: _pageController,
-                          builder: (context, child) {
-                            double value = 1.0;
-                            if (_pageController.position.haveDimensions) {
-                              value = _pageController.page! - index;
-                              value = (1 - (value.abs() * 0.25)).clamp(
-                                0.85,
-                                1.0,
-                              );
-                            }
-                            return Center(
-                              child: Transform.scale(
-                                scale: value,
-                                child: Opacity(opacity: value, child: child),
+                    child: _isLoadingBooks
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFD4AF37),
+                            ),
+                          )
+                        : _filteredBooks.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Tidak ada buku tersedia',
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white60
+                                    : Colors.black54,
+                                fontSize: 16,
                               ),
-                            );
-                          },
-                          child: BookCard(
-                            book: _filteredBooks[index],
-                            isDarkMode: isDarkMode,
-                          ), // Use filtered books
-                        );
-                      },
-                    ),
+                            ),
+                          )
+                        : PageView.builder(
+                            controller: _pageController,
+                            onPageChanged: (index) {
+                              setState(() => _currentPage = index);
+                            },
+                            itemCount: _filteredBooks.length,
+                            itemBuilder: (context, index) {
+                              return AnimatedBuilder(
+                                animation: _pageController,
+                                builder: (context, child) {
+                                  double value = 1.0;
+                                  if (_pageController.position.haveDimensions) {
+                                    value = _pageController.page! - index;
+                                    value = (1 - (value.abs() * 0.25)).clamp(
+                                      0.85,
+                                      1.0,
+                                    );
+                                  }
+                                  return Center(
+                                    child: Transform.scale(
+                                      scale: value,
+                                      child: Opacity(
+                                        opacity: value,
+                                        child: child,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: BookCard(
+                                  book: _filteredBooks[index],
+                                  isDarkMode: isDarkMode,
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ),
               ),
@@ -1109,10 +1046,28 @@ class BookCard extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: double.infinity,
-                    child: Image.asset(
-                      book.imageUrl,
+                    child: Image.network(
+                      coverProxy(book.imageUrl, w: 480, h: 600),
                       fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.grey[700]!, Colors.grey[800]!],
+                            ),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFD4AF37),
+                            ),
+                          ),
+                        );
+                      },
                       errorBuilder: (context, error, stackTrace) {
+                        print('DEBUG: BookCard image error: $error');
                         return Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -1241,7 +1196,7 @@ class BookCard extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const BookDetailPage(),
+                              builder: (context) => BookDetailPage(book: book),
                             ),
                           );
                         },
