@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:url_launcher/url_launcher.dart'; 
+import 'package:url_launcher/url_launcher.dart';
+// 1. TAMBAHKAN IMPOR THEME ANDA
+// Sesuaikan path-nya jika perlu, misalnya 'package:tokonovel/theme.dart'
+import 'theme.dart'; 
 
 void main() {
   runApp(const MyApp());
 }
 
+// MyApp ini mungkin hanya untuk tes, 
+// pastikan main.dart utama Anda yang dipakai
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Di aplikasi aslinya, Anda mungkin ingin membungkus MaterialApp ini
+    // dengan ValueListenableBuilder juga untuk mengganti tema (dark/light)
     return MaterialApp(
       title: 'Tentang Kami',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F0F0F),
-        primaryColor: Colors.amber,
-        fontFamily: 'Poppins',
-      ),
+      theme: AppThemes.darkTheme, // Ambil dari theme.dart
       home: const AboutUsPage(),
       debugShowCheckedModeBanner: false,
     );
@@ -78,7 +80,7 @@ class _AboutUsPageState extends State<AboutUsPage>
   @override
   Widget build(BuildContext context) {
     final List<TeamMember> teamMembers = [
-      TeamMember(
+       TeamMember(
         name: 'Jenar Aditiya Bagaskara',
         role: 'Team Leader',
         imageUrl: 'https://i.pravatar.cc/150?img=1',
@@ -120,136 +122,157 @@ class _AboutUsPageState extends State<AboutUsPage>
       ),
     ];
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
-      body: CustomScrollView(
-        slivers: [
-          // App Bar dengan Gradient
-          SliverAppBar(
-            expandedHeight: 120,
-            floating: false,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.amber.withOpacity(0.8),
-                    Colors.orange.withOpacity(0.6),
-                    const Color(0xFF0F0F0F),
-                  ],
+    // 2. GUNAKAN VALUELISTENABLEBUILDER
+    // Ini adalah langkah kunci untuk "mendengarkan" perubahan tema
+    return ValueListenableBuilder<Color>(
+      valueListenable: backgroundColorNotifier,
+      builder: (context, backgroundColor, child) {
+        // 3. TENTUKAN MODE SAAT INI
+        // Kita gunakan warna dari theme.dart sebagai acuan mode gelap
+        final isDarkMode = backgroundColor == const Color(0xFF1A1A1A);
+
+        return Scaffold(
+          // 4. GANTI WARNA STATIS MENJADI DINAMIS
+          backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+          body: CustomScrollView(
+            slivers: [
+              // App Bar dengan Gradient
+              SliverAppBar(
+                expandedHeight: 120,
+                floating: false,
+                pinned: true,
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.amber.withOpacity(0.8),
+                        Colors.orange.withOpacity(0.6),
+                        // 4. GANTI WARNA STATIS MENJADI DINAMIS
+                        isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+                      ],
+                    ),
+                  ),
+                  child: FlexibleSpaceBar(
+                    centerTitle: true,
+                    title: const Text(
+                      'TENTANG KAMI',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black45,
+                            offset: Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                leading: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_back,
+                        color: Colors.white, size: 20),
+                  ),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
-              child: FlexibleSpaceBar(
-                centerTitle: true,
-                title: const Text(
-                  'TENTANG KAMI',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black45,
-                        offset: Offset(0, 2),
-                        blurRadius: 4,
-                      ),
-                    ],
+
+              // Content
+              SliverToBoxAdapter(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+
+                        // Hero Section
+                        // 5. KIRIM STATUS isDarkMode KE WIDGET BAWAHAN
+                        _buildHeroSection(isDarkMode),
+
+                        const SizedBox(height: 40),
+
+                        // Stats Section
+                        // 5. KIRIM STATUS isDarkMode KE WIDGET BAWAHAN
+                        _buildStatsSection(isDarkMode),
+
+                        const SizedBox(height: 60),
+
+                        // Team Section Header
+                        // 5. KIRIM STATUS isDarkMode KE WIDGET BAWAHAN
+                        _buildSectionHeader('TIM KAMI', Icons.group, isDarkMode),
+
+                        const SizedBox(height: 30),
+
+                        // Team Grid
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Wrap(
+                              spacing: 20,
+                              runSpacing: 30,
+                              alignment: WrapAlignment.center,
+                              children: teamMembers.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final member = entry.value;
+                                return TweenAnimationBuilder<double>(
+                                  duration:
+                                      Duration(milliseconds: 500 + (index * 100)),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  curve: Curves.easeOutBack,
+                                  builder: (context, value, child) {
+                                    return Transform.scale(
+                                      scale: value,
+                                      child: Opacity(
+                                        opacity: value,
+                                        child: SizedBox(
+                                          width: constraints.maxWidth > 800
+                                              ? (constraints.maxWidth - 60) / 3
+                                              : constraints.maxWidth > 500
+                                                  ? (constraints.maxWidth - 40) / 2
+                                                  : constraints.maxWidth,
+                                          // 5. KIRIM STATUS isDarkMode KE WIDGET BAWAHAN
+                                          child: TeamMemberCard(
+                                            member: member,
+                                            isDarkMode: isDarkMode,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 60),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
-                child:
-                    const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
+            ],
           ),
-
-          // Content
-          SliverToBoxAdapter(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-
-                    // Hero Section
-                    _buildHeroSection(),
-
-                    const SizedBox(height: 40),
-
-                    // Stats Section
-                    _buildStatsSection(),
-
-                    const SizedBox(height: 60),
-
-                    // Team Section Header
-                    _buildSectionHeader('TIM KAMI', Icons.group),
-
-                    const SizedBox(height: 30),
-
-                    // Team Grid
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Wrap(
-                          spacing: 20,
-                          runSpacing: 30,
-                          alignment: WrapAlignment.center,
-                          children: teamMembers.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final member = entry.value;
-                            return TweenAnimationBuilder<double>(
-                              duration:
-                                  Duration(milliseconds: 500 + (index * 100)),
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              curve: Curves.easeOutBack,
-                              builder: (context, value, child) {
-                                return Transform.scale(
-                                  scale: value,
-                                  child: Opacity(
-                                    opacity: value,
-                                    child: SizedBox(
-                                      width: constraints.maxWidth > 800
-                                          ? (constraints.maxWidth - 60) / 3
-                                          : constraints.maxWidth > 500
-                                              ? (constraints.maxWidth - 40) / 2
-                                              : constraints.maxWidth,
-                                      child: TeamMemberCard(member: member),
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }).toList(),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 60),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeroSection() {
+  // 6. TAMBAHKAN PARAMETER isDarkMode
+  Widget _buildHeroSection(bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
@@ -303,7 +326,7 @@ class _AboutUsPageState extends State<AboutUsPage>
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.white, // Teks ini tetap putih karena di-mask
                 letterSpacing: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -312,12 +335,13 @@ class _AboutUsPageState extends State<AboutUsPage>
           const SizedBox(height: 20),
 
           // Description
-          const Text(
+          Text(
             'Kami adalah kelompok mahasiswa yang berdedikasi untuk menciptakan solusi inovatif dalam dunia digital. Dengan latar belakang yang beragam dan semangat kolaborasi yang kuat, kami berkomitmen untuk menghadirkan produk berkualitas tinggi yang dapat memberikan dampak positif bagi masyarakat.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
-              color: Colors.grey,
+              // 4. GANTI WARNA STATIS MENJADI DINAMIS
+              color: isDarkMode ? Colors.grey[400] : Colors.black54,
               height: 1.8,
               letterSpacing: 0.3,
             ),
@@ -327,22 +351,30 @@ class _AboutUsPageState extends State<AboutUsPage>
     );
   }
 
-  Widget _buildStatsSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  // 6. TAMBAHKAN PARAMETER isDarkMode
+  Widget _buildStatsSection(bool isDarkMode) {
+    // Menggunakan Wrap agar responsif di layar kecil
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 20,
+      runSpacing: 20,
       children: [
-        _buildStatCard('5+', 'Anggota Tim', Icons.people),
-        _buildStatCard('10+', 'Proyek', Icons.work),
-        _buildStatCard('100%', 'Dedikasi', Icons.favorite),
+        // 5. KIRIM STATUS isDarkMode KE WIDGET BAWAHAN
+        _buildStatCard('5+', 'Anggota Tim', Icons.people, isDarkMode),
+        _buildStatCard('10+', 'Proyek', Icons.work, isDarkMode),
+        _buildStatCard('100%', 'Dedikasi', Icons.favorite, isDarkMode),
       ],
     );
   }
 
-  Widget _buildStatCard(String number, String label, IconData icon) {
+  // 6. TAMBAHKAN PARAMETER isDarkMode
+  Widget _buildStatCard(
+      String number, String label, IconData icon, bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        // 4. GANTI WARNA STATIS MENJADI DINAMIS
+        color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.amber.withOpacity(0.2),
@@ -350,7 +382,10 @@ class _AboutUsPageState extends State<AboutUsPage>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withOpacity(0.1),
+            // 4. GANTI WARNA STATIS MENJADI DINAMIS
+            color: isDarkMode
+                ? Colors.amber.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -362,10 +397,11 @@ class _AboutUsPageState extends State<AboutUsPage>
           const SizedBox(height: 8),
           Text(
             number,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              // 4. GANTI WARNA STATIS MENJADI DINAMIS
+              color: isDarkMode ? Colors.white : Colors.black87,
             ),
           ),
           const SizedBox(height: 4),
@@ -373,7 +409,8 @@ class _AboutUsPageState extends State<AboutUsPage>
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[400],
+              // 4. GANTI WARNA STATIS MENJADI DINAMIS
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
             ),
           ),
         ],
@@ -381,7 +418,8 @@ class _AboutUsPageState extends State<AboutUsPage>
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  // 6. TAMBAHKAN PARAMETER isDarkMode
+  Widget _buildSectionHeader(String title, IconData icon, bool isDarkMode) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -398,10 +436,11 @@ class _AboutUsPageState extends State<AboutUsPage>
         const SizedBox(width: 12),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            // 4. GANTI WARNA STATIS MENJADI DINAMIS
+            color: isDarkMode ? Colors.white : Colors.black87,
             letterSpacing: 2,
           ),
         ),
@@ -416,8 +455,14 @@ class _AboutUsPageState extends State<AboutUsPage>
 
 class TeamMemberCard extends StatefulWidget {
   final TeamMember member;
+  // 7. TAMBAHKAN isDarkMode DI SINI
+  final bool isDarkMode;
 
-  const TeamMemberCard({Key? key, required this.member}) : super(key: key);
+  const TeamMemberCard({
+    Key? key,
+    required this.member,
+    required this.isDarkMode, // 8. TAMBAHKAN DI CONSTRUCTOR
+  }) : super(key: key);
 
   @override
   State<TeamMemberCard> createState() => _TeamMemberCardState();
@@ -428,19 +473,16 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
 
   // Fungsi untuk membuka URL
   Future<void> _launchSocialUrl(String url) async {
-    // Kita tambahkan prefix https:// jika belum ada
     String fullUrl = url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       fullUrl = 'https://$url';
     }
-    
+
     final Uri uri = Uri.parse(fullUrl);
-    
-    // Gunakan mode externalApplication agar membuka di browser/aplikasi
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      // Tampilkan pesan error jika gagal membuka link
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Tidak bisa membuka link: $fullUrl')),
@@ -465,28 +507,43 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+              // 9. GANTI WARNA STATIS MENJADI DINAMIS
               colors: _isHovered
                   ? [
-                      const Color(0xFF2A2A2A),
-                      const Color(0xFF1F1F1F),
+                      widget.isDarkMode
+                          ? const Color(0xFF2A2A2A)
+                          : Colors.grey[100]!,
+                      widget.isDarkMode
+                          ? const Color(0xFF1F1F1F)
+                          : Colors.grey[50]!,
                     ]
                   : [
-                      const Color(0xFF1F1F1F),
-                      const Color(0xFF1A1A1A),
+                      widget.isDarkMode
+                          ? const Color(0xFF1F1F1F)
+                          : Colors.white,
+                      widget.isDarkMode
+                          ? const Color(0xFF1A1A1A)
+                          : Colors.white70,
                     ],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
+              // 9. GANTI WARNA STATIS MENJADI DINAMIS
               color: _isHovered
                   ? Colors.amber.withOpacity(0.5)
-                  : Colors.grey.withOpacity(0.2),
+                  : widget.isDarkMode
+                      ? Colors.grey.withOpacity(0.2)
+                      : Colors.grey.withOpacity(0.4),
               width: _isHovered ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
+                // 9. GANTI WARNA STATIS MENJADI DINAMIS
                 color: _isHovered
                     ? Colors.amber.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.3),
+                    : widget.isDarkMode
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.2),
                 blurRadius: _isHovered ? 20 : 10,
                 offset: Offset(0, _isHovered ? 8 : 4),
               ),
@@ -533,7 +590,10 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.grey[800],
+                        // 9. GANTI WARNA STATIS MENJADI DINAMIS
+                        color: widget.isDarkMode
+                            ? Colors.grey[800]
+                            : Colors.grey[200],
                       ),
                       child: ClipOval(
                         child: Image.network(
@@ -541,11 +601,17 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              color: Colors.grey[800],
-                              child: const Icon(
+                              // 9. GANTI WARNA STATIS MENJADI DINAMIS
+                              color: widget.isDarkMode
+                                  ? Colors.grey[800]
+                                  : Colors.grey[200],
+                              child: Icon(
                                 Icons.person,
                                 size: 45,
-                                color: Colors.grey,
+                                // 9. GANTI WARNA STATIS MENJADI DINAMIS
+                                color: widget.isDarkMode
+                                    ? Colors.grey
+                                    : Colors.grey[600],
                               ),
                             );
                           },
@@ -586,16 +652,20 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
               // Name with Gradient
               ShaderMask(
                 shaderCallback: (bounds) => LinearGradient(
+                  // 9. GANTI WARNA STATIS MENJADI DINAMIS
                   colors: _isHovered
                       ? [Colors.amber, Colors.orange]
-                      : [Colors.white, Colors.white],
+                      : [
+                          widget.isDarkMode ? Colors.white : Colors.black87,
+                          widget.isDarkMode ? Colors.white : Colors.black87
+                        ],
                 ).createShader(bounds),
                 child: Text(
                   widget.member.name,
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.white, // Teks ini tetap putih karena di-mask
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -637,7 +707,9 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                   widget.member.description,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[400],
+                    // 9. GANTI WARNA STATIS MENJADI DINAMIS
+                    color:
+                        widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -655,8 +727,8 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                     icon: FontAwesomeIcons.instagram,
                     color: Colors.pink,
                     onTap: () {
-                      // Ambil username dari data member dan buat URL
-                      String username = widget.member.instagram.replaceAll('@', '');
+                      String username =
+                          widget.member.instagram.replaceAll('@', '');
                       _launchSocialUrl('instagram.com/$username');
                     },
                   ),
@@ -665,9 +737,13 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                     icon: FontAwesomeIcons.github,
                     color: Colors.purple,
                     onTap: () {
-                      // Ambil username dari data member dan buat URL
-                      String username = widget.member.github;
-                      _launchSocialUrl('github.com/$username');
+                      String githubUrl = widget.member.github;
+                      if (githubUrl.startsWith('https://') ||
+                          githubUrl.startsWith('http://')) {
+                        _launchSocialUrl(githubUrl);
+                      } else {
+                        _launchSocialUrl('github.com/$githubUrl');
+                      }
                     },
                   ),
                 ],
@@ -685,7 +761,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
     required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: onTap, // onTap sekarang memanggil fungsi _launchSocialUrl
+      onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.all(12),
