@@ -9,6 +9,7 @@ import 'package:image/image.dart' as img; // <-- 3. IMPORT DIPERLUKAN
 import 'package:tokonovel/login_register.dart';
 import 'package:tokonovel/models/user_models.dart';
 import 'package:tokonovel/theme.dart';
+import 'package:tokonovel/user_order_history_page.dart'; // Import UserOrderHistoryPage
 import 'services/firestore_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -23,6 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _bioController;
+  late TextEditingController _addressController; // Tambahkan controller untuk address
   bool _isLoading = false;
   bool _isEditing = false;
 
@@ -33,12 +35,14 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     _nameController = TextEditingController();
     _bioController = TextEditingController();
+    _addressController = TextEditingController(); // Inisialisasi address controller
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _bioController.dispose();
+    _addressController.dispose(); // Dispose address controller
     super.dispose();
   }
 
@@ -51,6 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
         final updatedProfile = currentProfile.copyWith(
           name: _nameController.text.trim(),
           bio: _bioController.text.trim(),
+          address: _addressController.text.trim(), // Tambahkan address
         );
 
         await _firestoreService.setUserProfile(updatedProfile);
@@ -307,6 +312,7 @@ class _ProfilePageState extends State<ProfilePage> {
               if (!_isEditing) {
                 _nameController.text = userProfile.name;
                 _bioController.text = userProfile.bio;
+                _addressController.text = userProfile.address; // Populate address field
               }
 
               // --- 7. LOGIKA BARU UNTUK DECODE GAMBAR BASE64 ---
@@ -462,6 +468,66 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             maxLines: 3,
                           ),
+                          const SizedBox(height: 16),
+
+                          // --- FORM 'ADDRESS' ---
+                          TextFormField(
+                            controller: _addressController,
+                            enabled: _isEditing,
+                            style: TextStyle(color: textColor),
+                            decoration: InputDecoration(
+                              labelText: 'Alamat',
+                              labelStyle: TextStyle(color: secondaryTextColor),
+                              prefixIcon: Icon(
+                                Icons.home_outlined,
+                                color: primaryColor,
+                              ),
+                              filled: true,
+                              fillColor: textFieldColor,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(color: primaryColor),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                                borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!,
+                                ),
+                              ),
+                            ),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 30),
+
+                          // --- RIWAYAT PESANAN ---
+                          if (!_isEditing)
+                            ListTile(
+                              leading: Icon(Icons.history, color: primaryColor),
+                              title: Text(
+                                'Riwayat Pesanan',
+                                style: TextStyle(color: textColor),
+                              ),
+                              trailing: Icon(Icons.arrow_forward_ios,
+                                  color: secondaryTextColor, size: 16),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const UserOrderHistoryPage(),
+                                  ),
+                                );
+                              },
+                            ),
                           const SizedBox(height: 30),
 
                           // --- TOMBOL HAPUS AKUN (Sudah Benar) ---

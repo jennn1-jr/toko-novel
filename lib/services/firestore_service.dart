@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tokonovel/models/book_model.dart';
+import 'package:tokonovel/models/order_model.dart';
 import 'package:tokonovel/models/user_models.dart';
 // import 'package:firebase_storage/firebase_storage.dart'; // <-- DIHAPUS (tidak terpakai)
 
@@ -32,6 +33,14 @@ class FirestoreService {
             toFirestore: (book, _) => book.toMap(),
           );
 
+  // Referensi ke koleksi orders
+  CollectionReference<OrderModel> get ordersCollection =>
+      _db.collection('orders').withConverter<OrderModel>(
+            fromFirestore: (snapshot, _) =>
+                OrderModel.fromMap(snapshot.data()!, snapshot.id),
+            toFirestore: (order, _) => order.toMap(),
+          );
+
   // Referensi ke subkoleksi cart
   CollectionReference<Map<String, dynamic>> getCartCollection(String userId) {
     return usersCollection.doc(userId).collection('cart');
@@ -53,7 +62,9 @@ class FirestoreService {
     if (userId == null) return null;
     final docSnapshot = await usersCollection.doc(userId).get();
     if (docSnapshot.exists) {
-      return docSnapshot.data();
+      final userProfile = docSnapshot.data();
+      print("getUserProfile: userId=${userId}, isAdmin=${userProfile?.isAdmin}");
+      return userProfile;
     } else {
       final newUserProfile = UserProfile(
           uid: userId, name: _auth.currentUser?.displayName ?? 'New User', bio: '');
@@ -216,6 +227,73 @@ class FirestoreService {
       }
       return [];
     });
+  }
+
+  // --- Operasi CRUD Buku untuk Admin ---
+
+  // Mendapatkan semua buku (untuk admin)
+  Stream<List<BookModel>> getAllBooks() {
+    return booksCollection.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    });
+  }
+
+  // Menambah buku baru
+  Future<void> addBook(BookModel book) {
+    final userId = getCurrentUserId();
+    print("addBook called by userId: $userId");
+    // Jika ID kosong, Firestore akan generate ID otomatis
+    return booksCollection.add(book);
+  }
+
+  // Memperbarui buku yang ada
+  Future<void> updateBook(BookModel book) {
+    if (book.id.isEmpty) {
+      throw Exception("Book ID cannot be empty for an update.");
+    }
+    return booksCollection.doc(book.id).update(book.toMap());
+  }
+
+  // Menghapus buku
+  Future<void> deleteBook(String bookId) {
+    if (bookId.isEmpty) {
+      throw Exception("Book ID cannot be empty for deletion.");
+    }
+    return booksCollection.doc(bookId).delete();
+  }
+
+  // --- Operasi CRUD Pesanan untuk Admin ---
+
+  // Menambah pesanan baru
+  Future<void> createOrder(OrderModel order) {
+    return ordersCollection.add(order);
+  }
+
+  // Mendapatkan semua pesanan (untuk admin)
+  Stream<List<OrderModel>> getAllOrders() {
+    return ordersCollection.orderBy('orderDate', descending: true).snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    });
+  }
+  // Mendapatkan pesanan user yang sedang login
+  Stream<List<OrderModel>> getUserOrdersStream() {
+    final userId = getCurrentUserId();
+    if (userId == null) return Stream.value([]);
+    return ordersCollection
+        .where('userId', isEqualTo: userId)
+        .orderBy('orderDate', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    });
+  }
+
+  // Memperbarui status pesanan
+  Future<void> updateOrderStatus(String orderId, String newStatus) {
+    if (orderId.isEmpty) {
+      throw Exception("Order ID cannot be empty for an update.");
+    }
+    return ordersCollection.doc(orderId).update({'status': newStatus});
   }
 
 

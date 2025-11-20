@@ -1,55 +1,39 @@
-// Firestore Security Rules
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ======================
-    // 🔹 USERS (dokumen & subkoleksi)
-    // ======================
+    // Users can read and write to their own user profile
     match /users/{userId} {
-      // Hanya pemilik UID yang boleh baca/tulis profilnya
-      allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      // Lindungi subcollections di bawah users/{userId}/...
-      match /{sub=**} {
-        allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+      // Users can manage their own cart
+      match /cart/{bookId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
       }
     }
 
-    // ======================
-    // 🔹 GENRES (read-only dari client)
-    // ======================
-    match /genres/{genreId} {
-      // Opsi A (Publik tanpa login):
-      allow read: if true;
-
-      // Opsi B (Wajib login) → gunakan ini kalau mau “hanya user login yang bisa lihat”:
-      // allow read: if request.auth != null;
-
-      // Tidak boleh tulis dari client
-      allow write: if false;
-    }
-
-    // ======================
-    // 🔹 BOOKS (read-only dari client)
-    //    *Jika koleksimu bernama NOVELS, ganti "books" -> "novels"
-    // ======================
+    // Rules for books and genres collections
     match /books/{bookId} {
-      // Opsi A (Publik tanpa login):
-      allow read: if true;
-
-      // Opsi B (Wajib login):
-      // allow read: if request.auth != null;
-
-      // Tidak boleh tulis dari client
-      allow write: if false;
+      allow read: if true; // Allow anyone to read books
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true; // Only admins can write/update books
     }
 
-    // ======================
-    // 🔹 Default: blok semua yang lain
-    // ======================
-    match /{document=**} {
-      allow read, write: if false;
+    match /genres/{genreId} {
+      allow read: if true; // Allow anyone to read genres
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true; // Only admins can write/update genres
+    }
+    
+    // Rules for orders collection
+    match /orders/{orderId} {
+      // Users can read their own orders, admins can read all orders
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+      
+      // Users can create their own orders
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Only admins can update (e.g., change status) or delete orders
+      allow update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
   }
 }

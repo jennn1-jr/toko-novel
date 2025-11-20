@@ -6,6 +6,8 @@ import 'package:printing/printing.dart';
 import 'package:tokonovel/utils/image_proxy.dart';
 import 'package:tokonovel/services/firestore_service.dart';
 import 'package:tokonovel/models/book_model.dart';
+import 'package:tokonovel/models/order_model.dart'; // Import OrderModel
+import 'package:tokonovel/models/user_models.dart'; // Import UserProfile
 import 'package:tokonovel/theme.dart';
 
 class CartPage extends StatefulWidget {
@@ -17,6 +19,65 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   final FirestoreService _firestoreService = FirestoreService();
+
+  Future<void> _processCheckout(
+      List<BookModel> cartItems, double totalAmount) async {
+    // 1. Get User Profile for shipping address
+    final UserProfile? userProfile = await _firestoreService.getUserProfile();
+    if (userProfile == null || userProfile.address.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Mohon lengkapi alamat pengiriman Anda di halaman profil.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 2. Prepare Order Items
+    final List<OrderItem> orderItems = cartItems
+        .map((book) => OrderItem(
+              bookId: book.id,
+              title: book.title ?? 'Unknown',
+              imageUrl: book.imageUrl ?? '',
+              price: (book.price ?? 0).toDouble(),
+              quantity: 1, // Assuming quantity is 1 per book in cart
+            ))
+        .toList();
+
+    // 3. Create Order Model
+    final OrderModel newOrder = OrderModel(
+      userId: _firestoreService.getCurrentUserId()!,
+      items: orderItems,
+      totalAmount: totalAmount,
+      shippingAddress: userProfile.address,
+      orderDate: DateTime.now(),
+      status: 'pending', // Initial status
+    );
+
+    try {
+      // 4. Save Order to Firestore
+      await _firestoreService.createOrder(newOrder);
+
+      // 5. Clear Cart
+      await _firestoreService.clearCart();
+
+      // 6. Proceed with QR Code and PDF generation
+      _showQrCode(
+        context,
+        cartItems,
+        totalAmount,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuat pesanan: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -296,8 +357,7 @@ class _CartPageState extends State<CartPage> {
                                 height: 50,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    _showQrCode(
-                                      context,
+                                    _processCheckout(
                                       cartItems,
                                       totalPrice + 15000,
                                     );

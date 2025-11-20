@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard.dart';
+import 'admin/admin_main_screen.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -60,10 +61,16 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
       if (!mounted) return;
-      // Navigate to dashboard on success
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardPage()),
-      );
+      // Navigate based on user role
+      if (email == 'tokonovel@gmail.com') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AdminMainScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const DashboardPage()),
+        );
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         if (e.code == 'user-not-found') {
