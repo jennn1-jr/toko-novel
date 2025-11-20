@@ -1,50 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tokonovel/models/book_model.dart'; // Assuming you have a Book model
-
-class OrderItem {
-  final String bookId;
-  final String title;
-  final String imageUrl;
-  final double price;
-  final int quantity;
-
-  OrderItem({
-    required this.bookId,
-    required this.title,
-    required this.imageUrl,
-    required this.price,
-    required this.quantity,
-  });
-
-  factory OrderItem.fromMap(Map<String, dynamic> data) {
-    return OrderItem(
-      bookId: data['bookId'] ?? '',
-      title: data['title'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
-      price: (data['price'] ?? 0.0).toDouble(),
-      quantity: (data['quantity'] ?? 0).toInt(),
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'bookId': bookId,
-      'title': title,
-      'imageUrl': imageUrl,
-      'price': price,
-      'quantity': quantity,
-    };
-  }
-}
 
 class OrderModel {
-  final String? id; // Document ID
+  final String? id;
   final String userId;
   final List<OrderItem> items;
   final double totalAmount;
   final String shippingAddress;
   final DateTime orderDate;
-  String status; // e.g., 'pending', 'packaging', 'shipping', 'completed'
+  final String status;
 
   OrderModel({
     this.id,
@@ -53,21 +16,21 @@ class OrderModel {
     required this.totalAmount,
     required this.shippingAddress,
     required this.orderDate,
-    this.status = 'pending',
+    required this.status,
   });
 
-  factory OrderModel.fromMap(Map<String, dynamic> data, String documentId) {
+  factory OrderModel.fromMap(Map<String, dynamic> map, String id) {
     return OrderModel(
-      id: documentId,
-      userId: data['userId'] ?? '',
-      items: (data['items'] as List<dynamic>?)
+      id: id,
+      userId: map['userId'] ?? '',
+      items: (map['items'] as List<dynamic>?)
               ?.map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
               .toList() ??
           [],
-      totalAmount: (data['totalAmount'] ?? 0.0).toDouble(),
-      shippingAddress: data['shippingAddress'] ?? '',
-      orderDate: (data['orderDate'] as Timestamp).toDate(),
-      status: data['status'] ?? 'pending',
+      totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      shippingAddress: map['shippingAddress'] ?? '',
+      orderDate: (map['orderDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      status: map['status'] ?? 'pending',
     );
   }
 
@@ -77,28 +40,40 @@ class OrderModel {
       'items': items.map((item) => item.toMap()).toList(),
       'totalAmount': totalAmount,
       'shippingAddress': shippingAddress,
-      'orderDate': Timestamp.fromDate(orderDate),
+      'orderDate': orderDate,
       'status': status,
     };
   }
+}
 
-  OrderModel copyWith({
-    String? id,
-    String? userId,
-    List<OrderItem>? items,
-    double? totalAmount,
-    String? shippingAddress,
-    DateTime? orderDate,
-    String? status,
-  }) {
-    return OrderModel(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      items: items ?? this.items,
-      totalAmount: totalAmount ?? this.totalAmount,
-      shippingAddress: shippingAddress ?? this.shippingAddress,
-      orderDate: orderDate ?? this.orderDate,
-      status: status ?? this.status,
+class OrderItem {
+  final String bookId;
+  final String title;
+  final int quantity;
+  final double price;
+
+  OrderItem({
+    required this.bookId,
+    required this.title,
+    required this.quantity,
+    required this.price,
+  });
+
+  factory OrderItem.fromMap(Map<String, dynamic> map) {
+    return OrderItem(
+      bookId: map['bookId'] ?? '',
+      title: map['title'] ?? '',
+      quantity: (map['quantity'] as num?)?.toInt() ?? 0,
+      price: (map['price'] as num?)?.toDouble() ?? 0.0,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'bookId': bookId,
+      'title': title,
+      'quantity': quantity,
+      'price': price,
+    };
   }
 }

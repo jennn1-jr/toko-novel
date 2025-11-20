@@ -73,7 +73,7 @@ class _CollectionPageState extends State<CollectionPage> {
                           colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
                         ).createShader(bounds),
                         child: const Text(
-                          'KOLEKSI SAYA',
+                          'FAVORITKU',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -109,7 +109,7 @@ class _CollectionPageState extends State<CollectionPage> {
                     return SliverFillRemaining(
                       child: Center(
                         child: Text(
-                          'Silakan login untuk melihat koleksi Anda.',
+                          'Silakan login untuk melihat favorit Anda.',
                           style: TextStyle(
                             color: isDarkMode ? Colors.white70 : Colors.black54,
                           ),
@@ -152,7 +152,7 @@ class _CollectionPageState extends State<CollectionPage> {
                                 ),
                                 SizedBox(height: 20),
                                 Text(
-                                  'Koleksi Anda masih kosong',
+                                  'Belum ada favorit ditambahkan.',
                                   style: TextStyle(
                                     fontSize: 18,
                                     color: isDarkMode ? Colors.white70 : Colors.black54,

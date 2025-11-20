@@ -1,7 +1,7 @@
-# TODO: Implement Share Functionality for Book Detail Page
+# TODO: Add Rating Feature for Completed Orders
 
-- [ ] Tambahkan dependensi `share_plus: ^10.0.0` ke `pubspec.yaml`
-- [ ] Edit `lib/book_detail_page.dart` untuk menambahkan import yang diperlukan (`share_plus`, `flutter/services.dart`, `url_launcher`)
-- [ ] Implementasikan logika `onPressed` untuk tombol share: tampilkan bottom sheet dengan opsi "Salin Link", "Bagikan ke WhatsApp", "Bagikan ke Aplikasi Lain"
-- [ ] Jalankan `flutter pub get` untuk menginstall dependensi baru
-- [ ] Test fungsionalitas share di halaman detail buku
+## Tasks
+- [ ] Update OrderItem model to include bookId
+- [ ] Update cart_page.dart to use bookId in OrderItem
+- [ ] Add rating UI in user_order_history_page.dart for each item in completed orders
+- [ ] Test rating functionality and Firestore updates

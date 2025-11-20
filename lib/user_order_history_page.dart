@@ -3,6 +3,60 @@ import 'package:intl/intl.dart';
 import 'package:tokonovel/services/firestore_service.dart';
 import 'package:tokonovel/models/order_model.dart';
 import 'package:tokonovel/theme.dart';
+import 'package:tokonovel/models/book_model.dart';
+
+class RatingWidget extends StatefulWidget {
+  final String bookId;
+  final FirestoreService firestoreService;
+
+  const RatingWidget({Key? key, required this.bookId, required this.firestoreService}) : super(key: key);
+
+  @override
+  _RatingWidgetState createState() => _RatingWidgetState();
+}
+
+class _RatingWidgetState extends State<RatingWidget> {
+  int? _currentRating;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<int?>(
+      stream: widget.firestoreService.getUserRatingStream(widget.bookId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        _currentRating = snapshot.data;
+        return Row(
+          children: List.generate(5, (index) {
+            return IconButton(
+              icon: Icon(
+                index < (_currentRating ?? 0) ? Icons.star : Icons.star_border,
+                color: Colors.amber,
+              ),
+              onPressed: () async {
+                final newRating = index + 1;
+                try {
+                  await widget.firestoreService.rateBook(widget.bookId, newRating);
+                  setState(() {
+                    _currentRating = newRating;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Rating berhasil disimpan')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Gagal menyimpan rating: $e')),
+                  );
+                }
+              },
+            );
+          }),
+        );
+      },
+    );
+  }
+}
 
 class UserOrderHistoryPage extends StatelessWidget {
   const UserOrderHistoryPage({Key? key}) : super(key: key);
@@ -102,18 +156,41 @@ class UserOrderHistoryPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           ...order.items.map((item) => Padding(
-                                padding: const EdgeInsets.only(bottom: 4.0),
-                                child: Row(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${item.title} x${item.quantity}',
-                                      style: TextStyle(color: secondaryTextColor),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${item.title} x${item.quantity}',
+                                            style: TextStyle(color: secondaryTextColor),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Rp ${item.price.toStringAsFixed(0)}',
+                                          style: TextStyle(color: secondaryTextColor),
+                                        ),
+                                      ],
                                     ),
-                                    const Spacer(),
-                                    Text(
-                                      'Rp ${item.price.toStringAsFixed(0)}',
-                                      style: TextStyle(color: secondaryTextColor),
-                                    ),
+                                    if (order.status == 'completed')
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8.0),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              'Beri Rating:',
+                                              style: TextStyle(color: textColor, fontSize: 14),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            RatingWidget(
+                                              bookId: item.bookId,
+                                              firestoreService: _firestoreService,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                   ],
                                 ),
                               )),

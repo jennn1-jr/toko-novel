@@ -246,7 +246,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Row(
                           children: [
                             _buildNavItem('Home', 0, isDarkMode),
-                            _buildNavItem('Koleksi', 1, isDarkMode),
+                            _buildNavItem('Favorit', 1, isDarkMode),
                             _buildNavItem('Keranjang', 2, isDarkMode),
                             _buildNavItem('About', 3, isDarkMode),
                           ],
@@ -593,7 +593,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Jelajahi Koleksi',
+                                'Jelajahi Semua Novel',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,

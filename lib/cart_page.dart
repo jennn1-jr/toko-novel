@@ -40,7 +40,6 @@ class _CartPageState extends State<CartPage> {
         .map((book) => OrderItem(
               bookId: book.id,
               title: book.title ?? 'Unknown',
-              imageUrl: book.imageUrl ?? '',
               price: (book.price ?? 0).toDouble(),
               quantity: 1, // Assuming quantity is 1 per book in cart
             ))

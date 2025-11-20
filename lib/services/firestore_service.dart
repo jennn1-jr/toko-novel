@@ -297,6 +297,76 @@ class FirestoreService {
   }
 
 
+  // --- Operasi Rating Buku ---
+
+  // Menambah atau memperbarui rating user untuk buku tertentu
+  Future<void> rateBook(String bookId, int rating) async {
+    final userId = getCurrentUserId();
+    if (userId == null) throw Exception("User not logged in");
+    if (rating < 1 || rating > 5) throw Exception("Rating must be between 1 and 5");
+
+    // Simpan rating user di subkoleksi ratings pada dokumen buku
+    await booksCollection.doc(bookId).collection('ratings').doc(userId).set({
+      'rating': rating,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Hitung ulang rating rata-rata dan jumlah voters
+    await _updateBookRating(bookId);
+  }
+
+  // Mendapatkan rating user untuk buku tertentu
+  Future<int?> getUserRating(String bookId) async {
+    final userId = getCurrentUserId();
+    if (userId == null) return null;
+
+    final ratingDoc = await booksCollection.doc(bookId).collection('ratings').doc(userId).get();
+    if (ratingDoc.exists) {
+      return ratingDoc.data()?['rating'] as int?;
+    }
+    return null;
+  }
+
+  // Mendapatkan rating user sebagai stream untuk real-time update
+  Stream<int?> getUserRatingStream(String bookId) {
+    final userId = getCurrentUserId();
+    if (userId == null) return Stream.value(null);
+
+    return booksCollection.doc(bookId).collection('ratings').doc(userId).snapshots().map((snapshot) {
+      if (snapshot.exists) {
+        return snapshot.data()?['rating'] as int?;
+      }
+      return null;
+    });
+  }
+
+  // Helper method untuk menghitung ulang rating buku
+  Future<void> _updateBookRating(String bookId) async {
+    final ratingsSnapshot = await booksCollection.doc(bookId).collection('ratings').get();
+
+    if (ratingsSnapshot.docs.isEmpty) {
+      // Jika tidak ada rating, set ke null
+      await booksCollection.doc(bookId).update({
+        'rating': null,
+        'voters': null,
+      });
+      return;
+    }
+
+    // Hitung rata-rata rating
+    double totalRating = 0;
+    for (final doc in ratingsSnapshot.docs) {
+      totalRating += (doc.data()['rating'] as int).toDouble();
+    }
+    final averageRating = totalRating / ratingsSnapshot.docs.length;
+
+    // Update rating dan voters di dokumen buku
+    await booksCollection.doc(bookId).update({
+      'rating': averageRating,
+      'voters': ratingsSnapshot.docs.length.toString(),
+    });
+  }
+
   // --- Tambahan ---
   // DELETE Akun User (Firebase Auth & Profil Firestore)
   Future<void> deleteUserAccount() async {
