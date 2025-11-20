@@ -250,9 +250,9 @@ class _AllBooksPageState extends State<AllBooksPage> {
                 const SizedBox(width: 16),
                 Text(
                   _activeGenreId?.isNotEmpty == true
-                      ? 'Semua Buku (Genre)'
+                      ? 'Semua Novel (Genre)'
                       : (widget.selectedCategorySlug == 'buku/semua'
-                            ? 'Semua Buku'
+                            ? 'Semua Novel'
                             : (widget.selectedCategorySlug == 'buku/komik'
                                   ? 'Semua Light Novel'
                                   : 'Semua Novel')),

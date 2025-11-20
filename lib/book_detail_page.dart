@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:tokonovel/services/firestore_service.dart';
 import 'package:tokonovel/theme.dart';
 import 'models/book_model.dart';
@@ -130,7 +133,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 expandedHeight: 0,
                 toolbarHeight: 70,
                 leading: Container(
-                  margin: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                   decoration: BoxDecoration(
                     color: isDarkMode
                         ? const Color(0xFF2A2A2A)
@@ -172,7 +175,11 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         Icons.share,
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        if (widget.book != null) {
+                          _showShareOptions(context);
+                        }
+                      },
                     ),
                   ),
                   Container(
@@ -846,6 +853,119 @@ class _BookDetailPageState extends State<BookDetailPage> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showShareOptions(BuildContext context) {
+    final book = widget.book!;
+    final shareText = 'Cek buku "${book.title}" oleh ${book.author}: https://tokonovel.com/book/${book.id}';
+    final whatsappUrl = 'https://wa.me/?text=${Uri.encodeComponent(shareText)}';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Bagikan Buku',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildShareOption(
+                    context,
+                    icon: Icons.copy,
+                    label: 'Salin Link',
+                    onTap: () async {
+                      await Clipboard.setData(ClipboardData(text: shareText));
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Link berhasil disalin')),
+                      );
+                    },
+                  ),
+                  _buildShareOption(
+                    context,
+                    icon: Icons.message,
+                    label: 'WhatsApp',
+                    onTap: () async {
+                      if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
+                        await launchUrl(Uri.parse(whatsappUrl));
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('WhatsApp tidak tersedia')),
+                        );
+                      }
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildShareOption(
+                    context,
+                    icon: Icons.share,
+                    label: 'Lainnya',
+                    onTap: () async {
+                      await Share.share(shareText);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildShareOption(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.black, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

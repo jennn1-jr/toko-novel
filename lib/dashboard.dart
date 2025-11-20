@@ -604,7 +604,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               SizedBox(width: 8),
                               Icon(
                                 Icons.arrow_forward,
-                                color: Colors.black,
+                                color: Color.fromARGB(255, 0, 0, 0),
                                 size: 20,
                               ),
                             ],
@@ -1223,7 +1223,7 @@ class BookCard extends StatelessWidget {
                             SizedBox(width: 6),
                             Icon(
                               Icons.arrow_forward,
-                              color: Colors.black,
+                              color: Color.fromARGB(255, 0, 0, 0),
                               size: 16,
                             ),
                           ],
