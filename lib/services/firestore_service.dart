@@ -97,6 +97,13 @@ class FirestoreService {
     await usersCollection.doc(userId).update({'name': newName});
   }
 
+  Future<void> updateUserAddress(String newAddress) async {
+    final userId = getCurrentUserId();
+    if (userId == null) throw Exception("User not logged in");
+    // Ini akan mengupdate field 'address' di dokumen user di Firestore
+    await usersCollection.doc(userId).update({'address': newAddress});
+  }
+
   // DELETE profile (Hati-hati: ini menghapus data profil, bukan akun user)
   Future<void> deleteUserProfile() async {
     final userId = getCurrentUserId();
@@ -366,7 +373,7 @@ class FirestoreService {
       'voters': ratingsSnapshot.docs.length.toString(),
     });
   }
-
+  
   // --- Tambahan ---
   // DELETE Akun User (Firebase Auth & Profil Firestore)
   Future<void> deleteUserAccount() async {

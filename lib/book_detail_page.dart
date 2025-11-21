@@ -6,6 +6,8 @@ import 'package:tokonovel/services/firestore_service.dart';
 import 'package:tokonovel/theme.dart';
 import 'models/book_model.dart';
 import 'utils/image_proxy.dart';
+import 'package:tokonovel/checkout_page.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,23 +48,21 @@ class _BookDetailPageState extends State<BookDetailPage> {
     super.initState();
     if (widget.book != null) {
       print('DEBUG BookDetail: Book = ${widget.book!.title}');
-      print('DEBUG BookDetail: ImageUrl = ${widget.book!.imageUrl}');
-      print(
-        'DEBUG BookDetail: ImageUrl isEmpty = ${widget.book!.imageUrl.isEmpty}',
-      );
     }
   }
 
-  /// Build book cover image with fallback handling
-  Widget _buildBookImage(String imageUrl, {required bool isDarkMode}) {
-    // Use coverProxy to optimize image loading
-    final proxiedUrl = coverProxy(imageUrl, w: 400, h: 600);
-    print('DEBUG: Original imageUrl: $imageUrl');
-    print('DEBUG: Proxied imageUrl: $proxiedUrl');
+  String formatRupiah(num amount) {
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(amount);
+  }
 
-    // If proxied URL is empty, show placeholder
+  Widget _buildBookImage(String imageUrl, {required bool isDarkMode}) {
+    final proxiedUrl = coverProxy(imageUrl, w: 400, h: 600);
+
     if (proxiedUrl.isEmpty) {
-      print('DEBUG: Image URL is empty, showing placeholder');
       return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -77,7 +77,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
       );
     }
 
-    // Try to load image from URL
     return Image.network(
       proxiedUrl,
       fit: BoxFit.cover,
@@ -97,7 +96,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
         );
       },
       errorBuilder: (context, error, stackTrace) {
-        print('DEBUG: Image load error: $error, showing placeholder');
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -114,6 +112,254 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
+  // --- PERBAIKAN DISINI: MODAL MENGIKUTI TEMA APLIKASI ---
+  void _showDirectPurchaseModal(BuildContext context) {
+    if (widget.book == null) return;
+
+    final book = widget.book!;
+
+    // AMBIL LOGIKA TEMA DARI NOTIFIER AGAR SINKRON
+    final currentColor = backgroundColorNotifier.value;
+    final isDarkMode = currentColor == const Color(0xFF1A1A1A);
+
+    int qty = 1;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            double totalPrice = (book.price ?? 0) * qty.toDouble();
+
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                // Set Background Color sesuai tema
+                color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                border: Border.all(
+                  color: Colors.amber.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Mau beli berapa?",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          // Text Color sesuai tema
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          color: isDarkMode ? Colors.grey : Colors.black,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Detail Singkat Buku
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          coverProxy(book.imageUrl ?? ''),
+                          width: 60,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Container(
+                            width: 60,
+                            height: 90,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              book.title ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              formatRupiah(book.price ?? 0),
+                              style: const TextStyle(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Kontrol Jumlah
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Jumlah",
+                        style: TextStyle(
+                          color: isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[700],
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? Colors.black45 : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.grey[700]!
+                                : Colors.grey[300]!,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.remove,
+                                color: Colors.amber,
+                              ),
+                              onPressed: () {
+                                if (qty > 1) {
+                                  setModalState(() {
+                                    qty--;
+                                  });
+                                }
+                              },
+                            ),
+                            Text(
+                              '$qty',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add, color: Colors.amber),
+                              onPressed: () {
+                                setModalState(() {
+                                  qty++;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Tombol Lanjut
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _processDirectCheckout(book, qty);
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Lanjut Pembayaran",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            formatRupiah(totalPrice),
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _processDirectCheckout(BookModel book, int qty) {
+    double price = (book.price ?? 0).toDouble();
+
+    double subTotal = price * qty;
+    double serviceFee = 2000.0 * qty;
+
+    double shippingCost = 0;
+    if (subTotal >= 300000) {
+      shippingCost = 0;
+    } else {
+      shippingCost = 10000;
+    }
+
+    double totalAmount = subTotal + shippingCost + serviceFee;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutPage(
+          items: [book],
+          quantities: {book.id: qty},
+          subTotal: subTotal,
+          shippingCost: shippingCost,
+          serviceFee: serviceFee,
+          totalAmount: totalAmount,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Color>(
@@ -125,7 +371,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
           backgroundColor: backgroundColor,
           body: CustomScrollView(
             slivers: [
-              // Custom App Bar
               SliverAppBar(
                 backgroundColor: isDarkMode ? Colors.black : Colors.white,
                 elevation: 0,
@@ -133,7 +378,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 expandedHeight: 0,
                 toolbarHeight: 70,
                 leading: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 11,
+                  ),
                   decoration: BoxDecoration(
                     color: isDarkMode
                         ? const Color(0xFF2A2A2A)
@@ -189,7 +437,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     ),
                     child: StreamBuilder<bool>(
                       stream: widget.book != null
-                          ? _firestoreService.isBookInCollection(widget.book!.id)
+                          ? _firestoreService.isBookInCollection(
+                              widget.book!.id,
+                            )
                           : Stream.value(false),
                       builder: (context, snapshot) {
                         final isFavorite = snapshot.data ?? false;
@@ -197,14 +447,17 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           decoration: BoxDecoration(
                             gradient: isFavorite
                                 ? const LinearGradient(
-                                    colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                                    colors: [
+                                      Color(0xFFD4AF37),
+                                      Color(0xFFFFD700),
+                                    ],
                                   )
                                 : null,
                             color: isFavorite
                                 ? null
                                 : (isDarkMode
-                                    ? const Color(0xFF2A2A2A)
-                                    : const Color(0xFFF5F5F5)),
+                                      ? const Color(0xFF2A2A2A)
+                                      : const Color(0xFFF5F5F5)),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: const Color(0xFFD4AF37).withOpacity(0.3),
@@ -213,7 +466,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                           child: IconButton(
                             icon: Icon(
-                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
                               color: isFavorite
                                   ? Colors.black
                                   : (isDarkMode ? Colors.white : Colors.black),
@@ -221,9 +476,13 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             onPressed: () {
                               if (widget.book != null) {
                                 if (isFavorite) {
-                                  _firestoreService.removeFromCollection(widget.book!.id);
+                                  _firestoreService.removeFromCollection(
+                                    widget.book!.id,
+                                  );
                                 } else {
-                                  _firestoreService.addToCollection(widget.book!.id);
+                                  _firestoreService.addToCollection(
+                                    widget.book!.id,
+                                  );
                                 }
                               }
                             },
@@ -247,12 +506,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 ),
               ),
 
-              // Book Content
               SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Book Cover Section with Hero Image
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -271,7 +528,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       child: Center(
                         child: Stack(
                           children: [
-                            // Glow effect behind book
                             Positioned.fill(
                               child: Container(
                                 margin: const EdgeInsets.all(20),
@@ -289,7 +545,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                 ),
                               ),
                             ),
-                            // Book Cover
                             Container(
                               width: 220,
                               height: 320,
@@ -321,30 +576,29 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stackTrace) {
-                                          return Container(
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                                colors: [
-                                                  Colors.grey[800]!,
-                                                  Colors.grey[900]!,
-                                                ],
-                                              ),
-                                            ),
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.book,
-                                                size: 80,
-                                                color: Colors.white54,
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                              return Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      Colors.grey[800]!,
+                                                      Colors.grey[900]!,
+                                                    ],
+                                                  ),
+                                                ),
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.book,
+                                                    size: 80,
+                                                    color: Colors.white54,
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                       ),
                               ),
                             ),
-                            // Discount Badge
                             Positioned(
                               top: 10,
                               left: 10,
@@ -381,7 +635,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ),
                     ),
 
-                    // Rating Section
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 24),
                       padding: const EdgeInsets.all(20),
@@ -445,7 +698,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
                     const SizedBox(height: 32),
 
-                    // Book Info Section
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
@@ -496,7 +748,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                           const SizedBox(height: 28),
 
-                          // Description Section
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -565,7 +816,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
                           const SizedBox(height: 24),
 
-                          // Book Details
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -656,7 +906,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
             ],
           ),
 
-          // Bottom Action Bar
           bottomNavigationBar: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -689,15 +938,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          if (widget.book != null) {
-                            _firestoreService.addToCart(widget.book!);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Buku ditambahkan ke keranjang'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
+                          _showDirectPurchaseModal(context);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
@@ -858,7 +1099,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   void _showShareOptions(BuildContext context) {
     final book = widget.book!;
-    final shareText = 'Cek buku "${book.title}" oleh ${book.author}: https://tokonovel.com/book/${book.id}';
+    final shareText =
+        'Cek buku "${book.title}" oleh ${book.author}: https://tokonovel.com/book/${book.id}';
     final whatsappUrl = 'https://wa.me/?text=${Uri.encodeComponent(shareText)}';
 
     showModalBottomSheet(
@@ -916,7 +1158,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         await launchUrl(Uri.parse(whatsappUrl));
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('WhatsApp tidak tersedia')),
+                          const SnackBar(
+                            content: Text('WhatsApp tidak tersedia'),
+                          ),
                         );
                       }
                       Navigator.pop(context);
@@ -941,7 +1185,12 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
-  Widget _buildShareOption(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _buildShareOption(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(

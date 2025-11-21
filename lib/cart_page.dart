@@ -87,11 +87,22 @@ class _CartPageState extends State<CartPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A2A),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: const Text("Hapus Buku?", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: Text("Yakin ingin membuang '${item.title}' dari keranjang?", style: const TextStyle(color: Colors.white70)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            "Hapus Buku?",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            "Yakin ingin membuang '${item.title}' dari keranjang?",
+            style: const TextStyle(color: Colors.white70),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Batal", style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            ),
             ElevatedButton(
               onPressed: () async {
                 Navigator.of(context).pop();
@@ -116,10 +127,19 @@ class _CartPageState extends State<CartPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A2A),
-          title: const Text("Kosongkan Keranjang?", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: const Text("Semua buku akan dihapus. Lanjutkan?", style: TextStyle(color: Colors.white70)),
+          title: const Text(
+            "Kosongkan Keranjang?",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            "Semua buku akan dihapus. Lanjutkan?",
+            style: TextStyle(color: Colors.white70),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Batal", style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            ),
             ElevatedButton(
               onPressed: () async {
                 Navigator.of(context).pop();
@@ -130,7 +150,10 @@ class _CartPageState extends State<CartPage> {
                 });
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text("Hapus Semua", style: TextStyle(color: Colors.white)),
+              child: const Text(
+                "Hapus Semua",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -138,23 +161,38 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Future<void> _processCheckout(List<BookModel> allItems, double totalAmount) async {
-    final selectedItemsList = allItems.where((item) => _selectedItemIds.contains(item.id)).toList();
+  Future<void> _processCheckout(
+    List<BookModel> allItems,
+    double totalAmount,
+  ) async {
+    final selectedItemsList = allItems
+        .where((item) => _selectedItemIds.contains(item.id))
+        .toList();
 
     if (selectedItemsList.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih minimal satu buku!'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pilih minimal satu buku!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
     final UserProfile? userProfile = await _firestoreService.getUserProfile();
     if (userProfile == null || userProfile.address.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mohon lengkapi alamat pengiriman di profil.'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon lengkapi alamat pengiriman di profil.'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
     double subTotal = 0;
     int totalBooksCount = 0;
-    
+
     for (var item in selectedItemsList) {
       int qty = _quantities[item.id] ?? 1;
       subTotal += (item.price ?? 0) * qty;
@@ -196,18 +234,48 @@ class _CartPageState extends State<CartPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 100, color: isDarkMode ? Colors.grey[800] : Colors.grey[300]),
+          Icon(
+            Icons.shopping_cart_outlined,
+            size: 100,
+            color: isDarkMode ? Colors.grey[800] : Colors.grey[300],
+          ),
           const SizedBox(height: 24),
-          Text("Keranjangmu Masih Kosong", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black87)),
+          Text(
+            "Keranjangmu Masih Kosong",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text("Sepertinya kamu belum menambahkan novel apapun.", textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[400] : Colors.grey[600])),
+          Text(
+            "Sepertinya kamu belum menambahkan novel apapun.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.search, color: Colors.black),
-            label: const Text("Mulai Belanja", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
-          )
+            label: const Text(
+              "Mulai Belanja",
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -230,16 +298,62 @@ class _CartPageState extends State<CartPage> {
                 pinned: true,
                 toolbarHeight: 80,
                 automaticallyImplyLeading: false,
-                flexibleSpace: Container(decoration: BoxDecoration(color: isDarkMode ? Colors.black : Colors.white, boxShadow: [BoxShadow(color: Colors.black.withAlpha((0.1 * 255).round()), blurRadius: 10, offset: const Offset(0, 2))])),
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.black : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha((0.1 * 255).round()),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
                 title: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32.0,
+                    vertical: 12.0,
+                  ),
                   child: Row(
                     children: [
-                      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFD4AF37), Color(0xFFFFD700)]), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.shopping_cart, color: Colors.black, size: 28)),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.shopping_cart,
+                          color: Colors.black,
+                          size: 28,
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      ShaderMask(shaderCallback: (bounds) => const LinearGradient(colors: [Color(0xFFD4AF37), Color(0xFFFFD700)]).createShader(bounds), child: const Text('KERANJANG', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1.5))),
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'KERANJANG',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
                       const Spacer(),
-                      IconButton(icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black), onPressed: () => Navigator.pop(context)),
+                      IconButton(
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
                   ),
                 ),
@@ -250,16 +364,24 @@ class _CartPageState extends State<CartPage> {
                 child: StreamBuilder<List<BookModel>>(
                   stream: _cartStream,
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: Padding(padding: EdgeInsets.all(50.0), child: CircularProgressIndicator()));
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) return _buildEmptyState(isDarkMode, context);
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(50.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    if (!snapshot.hasData || snapshot.data!.isEmpty)
+                      return _buildEmptyState(isDarkMode, context);
 
                     final cartItems = snapshot.data!;
 
                     double subTotal = 0;
-                    int totalBooksCount = 0; 
-                    
+                    int totalBooksCount = 0;
+
                     for (var item in cartItems) {
-                      if (!_quantities.containsKey(item.id)) _quantities[item.id] = 1;
+                      if (!_quantities.containsKey(item.id))
+                        _quantities[item.id] = 1;
                       if (_selectedItemIds.contains(item.id)) {
                         int qty = _quantities[item.id]!;
                         subTotal += (item.price ?? 0) * qty;
@@ -278,9 +400,11 @@ class _CartPageState extends State<CartPage> {
                         shippingCost = 10000;
                       }
                     }
-                    
+
                     double grandTotal = subTotal + shippingCost + serviceFee;
-                    bool isAllSelected = cartItems.isNotEmpty && _selectedItemIds.length == cartItems.length;
+                    bool isAllSelected =
+                        cartItems.isNotEmpty &&
+                        _selectedItemIds.length == cartItems.length;
 
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,24 +414,59 @@ class _CartPageState extends State<CartPage> {
                           child: Column(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 16,
+                                ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Row(
                                       children: [
-                                        Checkbox(value: isAllSelected, activeColor: Colors.amber, checkColor: Colors.black, onChanged: (val) => _toggleSelectAll(cartItems), side: BorderSide(color: isDarkMode ? Colors.grey : Colors.black)),
-                                        Text('Pilih Semua (${cartItems.length})', style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+                                        Checkbox(
+                                          value: isAllSelected,
+                                          activeColor: Colors.amber,
+                                          checkColor: Colors.black,
+                                          onChanged: (val) =>
+                                              _toggleSelectAll(cartItems),
+                                          side: BorderSide(
+                                            color: isDarkMode
+                                                ? Colors.grey
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Pilih Semua (${cartItems.length})',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
                                       ],
                                     ),
-                                    TextButton.icon(onPressed: () => _confirmClearCart(), icon: const Icon(Icons.delete_outline, color: Colors.red), label: const Text('Hapus Semua', style: TextStyle(color: Colors.red))),
+                                    TextButton.icon(
+                                      onPressed: () => _confirmClearCart(),
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red,
+                                      ),
+                                      label: const Text(
+                                        'Hapus Semua',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                               ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                ),
                                 itemCount: cartItems.length,
                                 itemBuilder: (context, index) {
                                   final item = cartItems[index];
@@ -315,12 +474,17 @@ class _CartPageState extends State<CartPage> {
                                     key: ValueKey(item.id),
                                     item: item,
                                     quantity: _quantities[item.id] ?? 1,
-                                    isSelected: _selectedItemIds.contains(item.id),
+                                    isSelected: _selectedItemIds.contains(
+                                      item.id,
+                                    ),
                                     isDarkMode: isDarkMode,
-                                    onToggleSelect: (val) => _toggleSelection(item.id),
-                                    onRemove: () => _showDeleteConfirmation(item),
+                                    onToggleSelect: (val) =>
+                                        _toggleSelection(item.id),
+                                    onRemove: () =>
+                                        _showDeleteConfirmation(item),
                                     onIncrement: () => _updateQuantity(item, 1),
-                                    onDecrement: () => _updateQuantity(item, -1),
+                                    onDecrement: () =>
+                                        _updateQuantity(item, -1),
                                   );
                                 },
                               ),
@@ -330,32 +494,80 @@ class _CartPageState extends State<CartPage> {
 
                         Container(
                           width: 350,
-                          color: isDarkMode ? const Color.fromARGB(255, 44, 43, 43) : const Color(0xFFF5F5F5),
+                          color: isDarkMode
+                              ? const Color.fromARGB(255, 44, 43, 43)
+                              : const Color(0xFFF5F5F5),
                           padding: const EdgeInsets.all(24),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Ringkasan Pesanan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
+                              Text(
+                                'Ringkasan Pesanan',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
                               const SizedBox(height: 24),
-                              _buildSummaryRow('Item Terpilih', '$totalBooksCount Buku', isDarkMode),
+                              _buildSummaryRow(
+                                'Item Terpilih',
+                                '$totalBooksCount Buku',
+                                isDarkMode,
+                              ),
                               const SizedBox(height: 12),
-                              _buildSummaryRow('Subtotal', formatRupiah(subTotal), isDarkMode),
+                              _buildSummaryRow(
+                                'Subtotal',
+                                formatRupiah(subTotal),
+                                isDarkMode,
+                              ),
                               const SizedBox(height: 12),
-                              _buildSummaryRow('Biaya Pengiriman', formatRupiah(shippingCost), isDarkMode),
-                              
+                              _buildSummaryRow(
+                                'Biaya Pengiriman',
+                                formatRupiah(shippingCost),
+                                isDarkMode,
+                              ),
+
                               // --- TAMBAHAN: BIAYA LAYANAN ---
                               const SizedBox(height: 12),
-                              _buildSummaryRow('Biaya Layanan', formatRupiah(serviceFee), isDarkMode),
+                              _buildSummaryRow(
+                                'Biaya Layanan',
+                                formatRupiah(serviceFee),
+                                isDarkMode,
+                              ),
+
                               // ------------------------------
-                              
                               const SizedBox(height: 12),
-                              Divider(color: isDarkMode ? Colors.grey[800] : Colors.grey[300]),
+                              Divider(
+                                color: isDarkMode
+                                    ? Colors.grey[800]
+                                    : Colors.grey[300],
+                              ),
                               const SizedBox(height: 12),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black)),
-                                  Text(formatRupiah(grandTotal), style: const TextStyle(color: Colors.amber, fontSize: 18, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Total',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
+                                  Text(
+                                    formatRupiah(grandTotal),
+                                    style: const TextStyle(
+                                      color: Colors.amber,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 32),
@@ -363,9 +575,27 @@ class _CartPageState extends State<CartPage> {
                                 width: double.infinity,
                                 height: 50,
                                 child: ElevatedButton(
-                                  onPressed: totalBooksCount > 0 ? () => _processCheckout(cartItems, grandTotal) : null,
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, disabledBackgroundColor: Colors.grey, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                                  child: Text('Checkout ($totalBooksCount)', style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+                                  onPressed: totalBooksCount > 0
+                                      ? () => _processCheckout(
+                                          cartItems,
+                                          grandTotal,
+                                        )
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.amber,
+                                    disabledBackgroundColor: Colors.grey,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Checkout ($totalBooksCount)',
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -387,8 +617,20 @@ class _CartPageState extends State<CartPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.grey[600], fontSize: 14)),
-        Text(value, style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.white70 : Colors.black87)),
+        Text(
+          label,
+          style: TextStyle(
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            color: isDarkMode ? Colors.white70 : Colors.black87,
+          ),
+        ),
       ],
     );
   }
@@ -403,14 +645,34 @@ class _CartPageState extends State<CartPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(width: 250, height: 250, child: QrImageView(data: 'Total: $formattedTotal', version: QrVersions.auto, size: 200.0)),
+            SizedBox(
+              width: 250,
+              height: 250,
+              child: QrImageView(
+                data: 'Total: $formattedTotal',
+                version: QrVersions.auto,
+                size: 200.0,
+              ),
+            ),
             const SizedBox(height: 16),
-            Text('Total Bayar: $formattedTotal', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Total Bayar: $formattedTotal',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Tutup')),
-          TextButton(onPressed: () { Navigator.of(context).pop(); _generatePdf(items, total); }, child: const Text('Cetak Struk')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Tutup'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _generatePdf(items, total);
+            },
+            child: const Text('Cetak Struk'),
+          ),
         ],
       ),
     );
@@ -419,7 +681,12 @@ class _CartPageState extends State<CartPage> {
   Future<void> _generatePdf(List<BookModel> items, double total) async {
     final doc = pw.Document();
     String formattedTotal = formatRupiah(total);
-    doc.addPage(pw.Page(build: (pw.Context context) => pw.Center(child: pw.Text("Struk $formattedTotal"))));
+    doc.addPage(
+      pw.Page(
+        build: (pw.Context context) =>
+            pw.Center(child: pw.Text("Struk $formattedTotal")),
+      ),
+    );
     await Printing.layoutPdf(onLayout: (format) => doc.save());
   }
 }
@@ -469,29 +736,57 @@ class _CartItemCardState extends State<CartItemCard> {
   }
 
   String formatRupiah(num amount) {
-    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount);
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(amount);
   }
 
   @override
   Widget build(BuildContext context) {
     final textColor = widget.isDarkMode ? Colors.white : Colors.black;
-    final subTextColor = widget.isDarkMode ? Colors.grey[400] : Colors.grey[600];
-    final cardColor = widget.isDarkMode ? const Color(0xFF2A2A2A) : Colors.white;
+    final subTextColor = widget.isDarkMode
+        ? Colors.grey[400]
+        : Colors.grey[600];
+    final cardColor = widget.isDarkMode
+        ? const Color(0xFF2A2A2A)
+        : Colors.white;
 
     int unitPrice = widget.item.price ?? 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))]),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          Checkbox(value: widget.isSelected, activeColor: Colors.amber, checkColor: Colors.black, onChanged: widget.onToggleSelect, side: BorderSide(color: widget.isDarkMode ? Colors.grey : Colors.black54)),
+          Checkbox(
+            value: widget.isSelected,
+            activeColor: Colors.amber,
+            checkColor: Colors.black,
+            onChanged: widget.onToggleSelect,
+            side: BorderSide(
+              color: widget.isDarkMode ? Colors.grey : Colors.black54,
+            ),
+          ),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: CachedNetworkImage(
               imageUrl: _fixedImageUrl,
-              width: 80, height: 110, fit: BoxFit.cover,
+              width: 80,
+              height: 110,
+              fit: BoxFit.cover,
               placeholder: (context, url) => Container(color: Colors.grey),
               errorWidget: (context, url, error) => const Icon(Icons.book),
             ),
@@ -511,12 +806,36 @@ class _CartItemCardState extends State<CartItemCard> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(widget.item.title ?? '', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor), maxLines: 2, overflow: TextOverflow.ellipsis),
+                            Text(
+                              widget.item.title ?? '',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             const SizedBox(height: 4),
-                            Text(widget.item.author ?? '', style: TextStyle(fontSize: 13, color: subTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(
+                              widget.item.author ?? '',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: subTextColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ],
                         ),
-                        Text(formatRupiah(unitPrice), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.amber)),
+                        Text(
+                          formatRupiah(unitPrice),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -524,11 +843,32 @@ class _CartItemCardState extends State<CartItemCard> {
                     children: [
                       Container(
                         height: 30,
-                        decoration: BoxDecoration(color: widget.isDarkMode ? Colors.black45 : Colors.grey[100], borderRadius: BorderRadius.circular(20), border: Border.all(color: widget.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!)),
+                        decoration: BoxDecoration(
+                          color: widget.isDarkMode
+                              ? Colors.black45
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: widget.isDarkMode
+                                ? Colors.grey[700]!
+                                : Colors.grey[300]!,
+                          ),
+                        ),
                         child: Row(
                           children: [
                             _iconBtn(Icons.remove, widget.onDecrement),
-                            Container(constraints: const BoxConstraints(minWidth: 24), alignment: Alignment.center, child: Text('${widget.quantity}', style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 14))),
+                            Container(
+                              constraints: const BoxConstraints(minWidth: 24),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${widget.quantity}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
                             _iconBtn(Icons.add, widget.onIncrement),
                           ],
                         ),
@@ -537,7 +877,18 @@ class _CartItemCardState extends State<CartItemCard> {
                       InkWell(
                         onTap: widget.onRemove,
                         borderRadius: BorderRadius.circular(20),
-                        child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(Icons.delete_outline, color: Colors.red, size: 20)),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -551,6 +902,16 @@ class _CartItemCardState extends State<CartItemCard> {
   }
 
   Widget _iconBtn(IconData icon, VoidCallback onTap) {
-    return Material(color: Colors.transparent, child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(20), child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0), child: Icon(icon, size: 16, color: Colors.amber))));
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          child: Icon(icon, size: 16, color: Colors.amber),
+        ),
+      ),
+    );
   }
 }
