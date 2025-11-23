@@ -30,7 +30,7 @@ class OrderModel {
       totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0.0,
       shippingAddress: map['shippingAddress'] ?? '',
       orderDate: (map['orderDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      status: map['status'] ?? 'pending',
+      status: map['status'] ?? 'psid',
     );
   }
 

@@ -246,19 +246,92 @@ class FirestoreService {
   }
 
   // Menambah buku baru
-  Future<void> addBook(BookModel book) {
+  Future<void> addBook(BookModel book) async {
     final userId = getCurrentUserId();
     print("addBook called by userId: $userId");
-    // Jika ID kosong, Firestore akan generate ID otomatis
-    return booksCollection.add(book);
+
+    final docRef = _db.collection('books').doc();
+
+    BookModel toAdd = book;
+    if (book.createdAt == null) {
+      toAdd = BookModel(
+        id: docRef.id,
+        genreId: book.genreId,
+        slug: book.slug,
+        title: book.title,
+        author: book.author,
+        imageUrl: book.imageUrl,
+        description: book.description,
+        publisher: book.publisher,
+        isbn: book.isbn,
+        price: book.price,
+        format: book.format,
+        sourceUrl: book.sourceUrl,
+        rating: book.rating,
+        voters: book.voters,
+        createdAt: DateTime.now(),
+      );
+    } else {
+      // set the ID to generated id if missing
+      toAdd = BookModel(
+        id: docRef.id,
+        genreId: book.genreId,
+        slug: book.slug,
+        title: book.title,
+        author: book.author,
+        imageUrl: book.imageUrl,
+        description: book.description,
+        publisher: book.publisher,
+        isbn: book.isbn,
+        price: book.price,
+        format: book.format,
+        sourceUrl: book.sourceUrl,
+        rating: book.rating,
+        voters: book.voters,
+        createdAt: book.createdAt,
+      );
+    }
+
+    await docRef.set(toAdd.toMap());
   }
 
   // Memperbarui buku yang ada
-  Future<void> updateBook(BookModel book) {
+  Future<void> updateBook(BookModel book) async {
     if (book.id.isEmpty) {
       throw Exception("Book ID cannot be empty for an update.");
     }
-    return booksCollection.doc(book.id).update(book.toMap());
+
+    // Ambil data buku lama dari Firestore agar bisa mempertahankan field seperti createdAt
+    final docRef = booksCollection.doc(book.id);
+    final docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      throw Exception("Book with id ${book.id} not found in Firestore.");
+    }
+
+    final oldBook = docSnap.data();
+    final createdAt = oldBook?.createdAt ?? DateTime.now();
+
+    // Buat BookModel baru dengan createdAt lama, jika ada
+    final updatedBook = BookModel(
+      id: book.id,
+      genreId: book.genreId,
+      slug: book.slug,
+      title: book.title,
+      author: book.author,
+      imageUrl: book.imageUrl,
+      description: book.description,
+      publisher: book.publisher,
+      isbn: book.isbn,
+      price: book.price,
+      format: book.format,
+      sourceUrl: book.sourceUrl,
+      rating: book.rating,
+      voters: book.voters,
+      createdAt: createdAt,
+    );
+
+    await docRef.set(updatedBook, SetOptions(merge: true));
   }
 
   // Menghapus buku

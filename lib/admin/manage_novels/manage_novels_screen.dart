@@ -23,27 +23,31 @@ class ManageNovelsScreen extends StatelessWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Header(title: "Kelola Novel"),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16 * 1.5, vertical: 16),
-                    backgroundColor: Colors.brown,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    backgroundColor: Colors.brown.shade700,
                     foregroundColor: Colors.white,
+                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 4,
                   ),
                   onPressed: () => _showAddEditDialog(context),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, size: 22),
                   label: const Text("Tambah Novel Baru"),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             StreamBuilder<List<BookModel>>(
               stream: firestoreService.getAllBooks(),
               builder: (context, snapshot) {
@@ -102,21 +106,36 @@ class ManageNovelsScreen extends StatelessWidget {
 
                 return Container(
                    height: 600, // Explicit height for PaginatedDataTable2
-                   padding: const EdgeInsets.all(16),
+                   padding: const EdgeInsets.all(24),
                    decoration: BoxDecoration(
                        color: Colors.white,
-                       borderRadius: const BorderRadius.all(Radius.circular(10)),
-                       border: Border.all(color: Colors.grey.shade200),
+                       borderRadius: BorderRadius.circular(16),
+                       boxShadow: [
+                         BoxShadow(
+                           color: Colors.grey.withOpacity(0.2),
+                           spreadRadius: 3,
+                           blurRadius: 8,
+                           offset: const Offset(0, 3),
+                         ),
+                       ],
                    ),
                   child: PaginatedDataTable2(
-                    columnSpacing: 16,
-                    minWidth: 600,
+                    columnSpacing: 24,
+                    minWidth: 700,
+                    headingRowHeight: 56,
+                    dataRowHeight: 56,
+                    horizontalMargin: 24,
+                    border: TableBorder.symmetric(
+                      inside: BorderSide(color: Colors.grey.shade300),
+                    ),
                     source: dataSource,
                     columns: const [
-                      DataColumn(label: Text("Judul")),
-                      DataColumn(label: Text("Penulis")),
-                      DataColumn(label: Text("Harga")),
-                      DataColumn(label: Text("Aksi")),
+                      DataColumn(label: Text("Judul", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
+                      DataColumn(label: Text("Penulis", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
+                      DataColumn(label: Text("ISBN", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
+                      DataColumn(label: Text("Harga", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
+                      DataColumn(label: Text("Dibuat Pada", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
+                      DataColumn(label: Text("Aksi", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
                     ],
                     rowsPerPage: 10,
                   ),
@@ -147,10 +166,19 @@ class BookDataSource extends DataTableSource {
       return null;
     }
     final book = books[index];
+
+    String formattedDate = "";
+    if (book.createdAt != null) {
+      final d = book.createdAt!;
+      formattedDate = "${d.day.toString().padLeft(2,'0')}-${d.month.toString().padLeft(2,'0')}-${d.year}";
+    }
+
     return DataRow(cells: [
       DataCell(Text(book.title)),
       DataCell(Text(book.author)),
+      DataCell(Text(book.isbn?.isNotEmpty == true ? book.isbn! : "N/A")),
       DataCell(Text("Rp ${book.price ?? 0}")),
+      DataCell(Text(formattedDate)),
       DataCell(Row(
         children: [
           IconButton(

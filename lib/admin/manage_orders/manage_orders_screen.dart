@@ -18,11 +18,9 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
 
   // Daftar Status untuk Dropdown (Update Data)
   final List<String> _orderStatuses = [
-    'pending',
     'paid',
     'packaging',
     'shipping',
-    'delivered',
     'completed',
     'cancelled'
   ];
@@ -31,7 +29,6 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
   final List<String> _filterOptions = [
     'Semua',
     'paid',
-    'pending',
     'packaging',
     'shipping',
     'completed',
@@ -177,7 +174,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
       return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount);
     }
 
-    String currentStatus = _orderStatuses.contains(order.status) ? order.status : 'pending';
+    String currentStatus = _orderStatuses.contains(order.status) ? order.status : 'paid';
 
     return DataRow(
       cells: [
@@ -238,7 +235,6 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
 String _getDisplayStatus(String status) {
     switch (status) {
       case 'Semua': return 'Semua';
-      case 'pending': return 'Pending'; 
       case 'paid': return 'Dibayar';
       case 'packaging': return 'Dikemas';
       case 'shipping': return 'Dikirim';
@@ -253,10 +249,8 @@ String _getDisplayStatus(String status) {
     switch (status) {
       case 'Semua': return Colors.grey[800]!;
       case 'paid': return Colors.blue;
-      case 'pending': return Colors.grey;
       case 'packaging': return Colors.orange;
       case 'shipping': return Colors.purple;
-      case 'delivered': return Colors.purpleAccent;
       case 'completed': return Colors.green;
       case 'cancelled': return Colors.red;
       default: return Colors.grey;

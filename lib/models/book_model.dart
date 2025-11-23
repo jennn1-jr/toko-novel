@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class BookModel {
   final String id;          // doc id atau field "id"
   final String genreId;     // "genre_id" di data kamu adalah string angka ("1","2",...)
@@ -15,6 +17,7 @@ class BookModel {
   final String? sourceUrl;
   final double? rating;     // opsional: kalau tidak ada, biarkan null
   final String? voters;     // opsional
+  final DateTime? createdAt; // new field for creation timestamp
 
   BookModel({
     required this.id,
@@ -31,7 +34,9 @@ class BookModel {
     this.sourceUrl,
     this.rating,
     this.voters,
+    this.createdAt,
   });
+
 
   factory BookModel.fromMap(Map<String, dynamic> json, String docId) {
     int? _tryInt(dynamic v) {
@@ -45,6 +50,13 @@ class BookModel {
       if (v == null) return null;
       if (v is num) return v.toDouble();
       return double.tryParse(v.toString());
+    }
+
+    Timestamp? _tryTimestamp(dynamic v) {
+      if (v == null) return null;
+      if (v is Timestamp) return v;
+      if (v is DateTime) return Timestamp.fromDate(v);
+      return null;
     }
 
     return BookModel(
@@ -62,9 +74,11 @@ class BookModel {
       sourceUrl: json['source_url']?.toString(),
       rating: _tryDouble(json['rating']),
       voters: json['voters']?.toString(),
+      createdAt: _tryTimestamp(json['created_at'])?.toDate(),
     );
   }
 
+  
   Map<String, dynamic> toMap() => {
         'id': id,
         'genre_id': genreId,
@@ -80,6 +94,7 @@ class BookModel {
         'source_url': sourceUrl,
         'rating': rating,
         'voters': voters,
+        'created_at': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
       };
 }
 

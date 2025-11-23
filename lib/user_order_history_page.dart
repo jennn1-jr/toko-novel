@@ -209,10 +209,10 @@ class UserOrderHistoryPage extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'pending':
-        return Colors.orange;
+      case 'paid':
+        return  Colors.blue;
       case 'packaging':
-        return Colors.blue;
+        return Colors.orange;
       case 'shipping':
         return Colors.green;
       case 'completed':

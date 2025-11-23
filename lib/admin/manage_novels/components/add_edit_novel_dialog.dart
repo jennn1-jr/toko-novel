@@ -15,12 +15,15 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
   final _formKey = GlobalKey<FormState>();
   final _firestoreService = FirestoreService();
 
+
   late TextEditingController _titleController;
   late TextEditingController _authorController;
   late TextEditingController _descController;
   late TextEditingController _priceController;
   late TextEditingController _imageUrlController;
   late TextEditingController _genreIdController;
+  late TextEditingController _isbnController;
+  late TextEditingController _publisherController;
 
   @override
   void initState() {
@@ -30,7 +33,9 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
     _descController = TextEditingController(text: widget.book?.description ?? '');
     _priceController = TextEditingController(text: widget.book?.price?.toString() ?? '');
     _imageUrlController = TextEditingController(text: widget.book?.imageUrl ?? '');
-    _genreIdController = TextEditingController(text: widget.book?.genreId ?? '1'); // Default genre
+    _genreIdController = TextEditingController(text: widget.book?.genreId ?? ''); // Default genre
+    _isbnController = TextEditingController(text: widget.book?.isbn ?? '');
+    _publisherController = TextEditingController(text: widget.book?.publisher ?? 'Kelompok 4');
   }
 
   @override
@@ -41,6 +46,8 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
     _priceController.dispose();
     _imageUrlController.dispose();
     _genreIdController.dispose();
+    _isbnController.dispose();
+    _publisherController.dispose();
     super.dispose();
   }
 
@@ -59,8 +66,8 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
         genreId: _genreIdController.text,
         slug: widget.book?.slug ?? slug,
         // Fill other fields with default/empty values if needed
-        publisher: widget.book?.publisher,
-        isbn: widget.book?.isbn,
+        publisher: _publisherController.text,
+        isbn: _isbnController.text,
         format: widget.book?.format,
         sourceUrl: widget.book?.sourceUrl,
         rating: widget.book?.rating,
@@ -101,8 +108,10 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
                 _buildTextFormField(controller: _descController, label: 'Deskripsi', maxLines: 3),
                 _buildTextFormField(controller: _priceController, label: 'Harga', isNumber: true),
                 _buildTextFormField(controller: _imageUrlController, label: 'URL Gambar'),
-                _buildTextFormField(controller: _genreIdController, label: 'Genre ID'),
-              ],
+          _buildTextFormField(controller: _genreIdController, label: 'Genre ID'),
+          _buildTextFormField(controller: _isbnController, label: 'ISBN'),
+          _buildTextFormField(controller: _publisherController, label: 'Penerbit'),
+        ],
             ),
           ),
         ),

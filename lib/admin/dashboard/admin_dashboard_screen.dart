@@ -36,7 +36,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 final int totalOrders = orders.length;
 
                 // 1. Pending (Belum Bayar / Baru)
-                final int pendingCount = orders.where((o) => o.status == 'pending').length;
+                final int paidCount = orders.where((o) => o.status == 'paid').length;
 
                 // 2. Perlu Dikemas (Paid + Packaging)
                 final int packagingCount = orders.where((o) => o.status == 'paid' || o.status == 'packaging').length;
@@ -61,7 +61,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       childAspectRatio: 1.4,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        _buildSummaryCard("Total Pesanan", totalOrders.toString(), Colors.blue, Icons.shopping_cart),
+                        _buildSummaryCard("Total Pesanan", totalOrders.toString(), Colors.black, Icons.shopping_cart),
                         _buildSummaryCard("Perlu Dikemas", packagingCount.toString(), Colors.orange, Icons.inventory_2),
                         _buildSummaryCard("Dalam Pengiriman", shippingCount.toString(), Colors.purple, Icons.local_shipping),
                         _buildSummaryCard("Selesai", completedCount.toString(), Colors.green, Icons.check_circle),
@@ -96,7 +96,7 @@ class AdminDashboardScreen extends StatelessWidget {
                                       centerSpaceRadius: 50,
                                       sections: [
                                         // Urutan warna searah jarum jam
-                                        _buildPieSection(pendingCount.toDouble(), Colors.grey), 
+                                        _buildPieSection(paidCount.toDouble(), const Color.fromARGB(255, 0, 108, 202)), 
                                         _buildPieSection(packagingCount.toDouble(), Colors.orange),
                                         _buildPieSection(shippingCount.toDouble(), Colors.purple),
                                         _buildPieSection(completedCount.toDouble(), Colors.green),
@@ -114,7 +114,7 @@ class AdminDashboardScreen extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _LegendItem(color: Colors.grey, text: "Pending"),
+                                    _LegendItem(color: Color.fromARGB(255, 0, 128, 207), text: "Paid"),
                                     SizedBox(height: 12),
                                     _LegendItem(color: Colors.orange, text: "Perlu Dikemas"),
                                     SizedBox(height: 12),
