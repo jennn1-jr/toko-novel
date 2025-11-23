@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tokonovel/models/book_model.dart';
 import 'package:tokonovel/models/order_model.dart';
+import 'package:tokonovel/models/riview_model.dart';
 import 'package:tokonovel/models/user_models.dart';
 // import 'package:firebase_storage/firebase_storage.dart'; // <-- DIHAPUS (tidak terpakai)
 
@@ -466,5 +467,69 @@ class FirestoreService {
       throw Exception(
           "Failed to delete account. Please re-authenticate and try again.");
     }
+  }
+
+  // --- UPDATE: Fungsi Rate Book sekarang mencakup Ulasan ---
+  Future<void> submitReview({
+    required String bookId,
+    required int rating,
+    required String comment,
+  }) async {
+    final userId = getCurrentUserId();
+    if (userId == null) throw Exception("User not logged in");
+    if (rating < 1 || rating > 5) throw Exception("Rating must be between 1 and 5");
+
+    // 1. Ambil Profil User dulu untuk mendapatkan Nama & Foto terbaru
+    final userDoc = await usersCollection.doc(userId).get();
+    final userData = userDoc.data();
+    final userName = userData?.name ?? 'Pengguna';
+    final photoUrl = userData?.photoUrl ?? '';
+
+    // 2. Simpan Rating + Komentar di sub-collection
+    await booksCollection.doc(bookId).collection('ratings').doc(userId).set({
+      'userId': userId,
+      'userName': userName,
+      'photoUrl': photoUrl,
+      'rating': rating,
+      'comment': comment,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // 3. Hitung ulang rata-rata (Logika sama seperti sebelumnya)
+    await _updateBookRating(bookId);
+  }
+
+  // --- BARU: Stream untuk mendapatkan list review di Detail Page ---
+  Stream<List<ReviewModel>> getBookReviewsStream(String bookId) {
+    return booksCollection
+        .doc(bookId)
+        .collection('ratings')
+        .orderBy('timestamp', descending: true) // Urutkan dari yang terbaru
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return ReviewModel.fromMap(doc.data());
+      }).toList();
+    });
+  }
+
+  // --- BARU: Cek apakah user sudah pernah beli buku ini (status completed) ---
+  Future<bool> hasUserPurchasedBook(String bookId) async {
+    final userId = getCurrentUserId();
+    if (userId == null) return false;
+
+    // Cari di orders collection
+    final query = await ordersCollection
+        .where('userId', isEqualTo: userId)
+        .where('status', isEqualTo: 'completed') // Hanya yang sudah selesai
+        .get();
+
+    for (var doc in query.docs) {
+      final order = doc.data();
+      // Cek apakah ada item dengan bookId tersebut
+      bool found = order.items.any((item) => item.bookId == bookId);
+      if (found) return true;
+    }
+    return false;
   }
 }

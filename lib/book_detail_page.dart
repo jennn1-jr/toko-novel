@@ -8,6 +8,8 @@ import 'models/book_model.dart';
 import 'utils/image_proxy.dart';
 import 'package:tokonovel/checkout_page.dart';
 import 'package:intl/intl.dart';
+import 'package:tokonovel/models/riview_model.dart';
+import 'dart:convert'; // Untuk decode base64 foto profil
 
 void main() {
   runApp(const MyApp());
@@ -892,6 +894,151 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                   value: '${widget.book?.rating ?? 0.0}/5.0',
                                   isDarkMode: isDarkMode,
                                 ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 32),
+                          
+                          // --- BAGIAN ULASAN REAL-TIME ---
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 4, height: 24,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFD4AF37),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Ulasan Pembaca',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode ? Colors.white : Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                // STREAM BUILDER REVIEW
+                                widget.book == null 
+                                ? const SizedBox()
+                                : StreamBuilder<List<ReviewModel>>(
+                                    stream: _firestoreService.getBookReviewsStream(widget.book!.id),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                        return const Center(child: CircularProgressIndicator());
+                                      }
+                                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 20),
+                                          child: Center(
+                                            child: Text(
+                                              "Belum ada ulasan. Jadilah yang pertama!",
+                                              style: TextStyle(color: isDarkMode ? Colors.grey : Colors.black54),
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      final reviews = snapshot.data!;
+                                      
+                                      return ListView.separated(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: reviews.length,
+                                        separatorBuilder: (ctx, i) => Divider(color: Colors.grey.withOpacity(0.2)),
+                                        itemBuilder: (context, index) {
+                                          final review = reviews[index];
+                                          
+                                          // Decode foto profil jika ada
+                                          Uint8List? userPhotoBytes;
+                                          if (review.photoUrl != null && review.photoUrl!.isNotEmpty) {
+                                            try {
+                                              userPhotoBytes = base64Decode(review.photoUrl!);
+                                            } catch (_) {}
+                                          }
+
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                            child: Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                CircleAvatar(
+                                                  backgroundColor: Colors.grey[300],
+                                                  backgroundImage: userPhotoBytes != null 
+                                                      ? MemoryImage(userPhotoBytes) 
+                                                      : null,
+                                                  child: userPhotoBytes == null 
+                                                      ? const Icon(Icons.person, color: Colors.grey) 
+                                                      : null,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            review.userName,
+                                                            style: TextStyle(
+                                                              fontWeight: FontWeight.bold,
+                                                              color: isDarkMode ? Colors.white : Colors.black,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            DateFormat('dd MMM yyyy').format(review.timestamp),
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        children: List.generate(5, (starIndex) {
+                                                          return Icon(
+                                                            starIndex < review.rating ? Icons.star : Icons.star_border,
+                                                            size: 14,
+                                                            color: Colors.amber,
+                                                          );
+                                                        }),
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        review.comment.isEmpty ? "Tidak ada komentar." : review.comment,
+                                                        style: TextStyle(
+                                                          color: isDarkMode ? Colors.grey[300] : Colors.black87,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
                               ],
                             ),
                           ),
