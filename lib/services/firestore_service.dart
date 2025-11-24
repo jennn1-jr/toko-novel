@@ -532,4 +532,8 @@ class FirestoreService {
     }
     return false;
   }
+
+  Stream<BookModel?> getBookStream(String bookId) {
+    return booksCollection.doc(bookId).snapshots().map((snapshot) => snapshot.data());
+  }
 }

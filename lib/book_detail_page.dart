@@ -43,7 +43,6 @@ class BookDetailPage extends StatefulWidget {
 
 class _BookDetailPageState extends State<BookDetailPage> {
   final FirestoreService _firestoreService = FirestoreService();
-  bool isFavorite = false;
 
   @override
   void initState() {
@@ -114,13 +113,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
-  // --- PERBAIKAN DISINI: MODAL MENGIKUTI TEMA APLIKASI ---
-  void _showDirectPurchaseModal(BuildContext context) {
-    if (widget.book == null) return;
-
-    final book = widget.book!;
-
-    // AMBIL LOGIKA TEMA DARI NOTIFIER AGAR SINKRON
+  // --- MODAL PEMBELIAN ---
+  void _showDirectPurchaseModal(BuildContext context, BookModel book) {
     final currentColor = backgroundColorNotifier.value;
     final isDarkMode = currentColor == const Color(0xFF1A1A1A);
 
@@ -137,7 +131,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
             return Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                // Set Background Color sesuai tema
                 color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
@@ -160,7 +153,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          // Text Color sesuai tema
                           color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       ),
@@ -181,7 +173,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          coverProxy(book.imageUrl ?? ''),
+                          coverProxy(book.imageUrl),
                           width: 60,
                           height: 90,
                           fit: BoxFit.cover,
@@ -198,7 +190,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              book.title ?? '',
+                              book.title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -334,17 +326,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   void _processDirectCheckout(BookModel book, int qty) {
     double price = (book.price ?? 0).toDouble();
-
     double subTotal = price * qty;
     double serviceFee = 2000.0 * qty;
-
-    double shippingCost = 0;
-    if (subTotal >= 300000) {
-      shippingCost = 0;
-    } else {
-      shippingCost = 10000;
-    }
-
+    double shippingCost = (subTotal >= 300000) ? 0 : 10000;
     double totalAmount = subTotal + shippingCost + serviceFee;
 
     Navigator.push(
@@ -364,796 +348,899 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Color>(
-      valueListenable: backgroundColorNotifier,
-      builder: (context, backgroundColor, child) {
-        final isDarkMode = backgroundColor == const Color(0xFF1A1A1A);
+    // 1. STREAM BUILDER UTAMA: Mendengarkan perubahan data buku (rating, voters, dll)
+    return StreamBuilder<BookModel?>(
+      stream: widget.book != null
+          ? _firestoreService.getBookStream(widget.book!.id)
+          : const Stream.empty(),
+      builder: (context, snapshot) {
+        // 2. DATA DISPLAY: Gunakan data terbaru dari stream, jika null pakai data widget lama
+        final displayBook = snapshot.data ?? widget.book;
 
-        return Scaffold(
-          backgroundColor: backgroundColor,
-          body: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                backgroundColor: isDarkMode ? Colors.black : Colors.white,
-                elevation: 0,
-                pinned: true,
-                expandedHeight: 0,
-                toolbarHeight: 70,
-                leading: Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 11,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2A2A2A)
-                        : const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFD4AF37).withOpacity(0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                actions: [
-                  Container(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? const Color(0xFF2A2A2A)
-                          : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFD4AF37).withOpacity(0.3),
-                        width: 1.5,
+        // Jika tidak ada data sama sekali
+        if (displayBook == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return ValueListenableBuilder<Color>(
+          valueListenable: backgroundColorNotifier,
+          builder: (context, backgroundColor, child) {
+            final isDarkMode = backgroundColor == const Color(0xFF1A1A1A);
+
+            return Scaffold(
+              backgroundColor: backgroundColor,
+              body: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: isDarkMode ? Colors.black : Colors.white,
+                    elevation: 0,
+                    pinned: true,
+                    expandedHeight: 0,
+                    toolbarHeight: 70,
+                    leading: Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? const Color(0xFF2A2A2A)
+                            : const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFD4AF37).withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
                       ),
                     ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.share,
-                        color: isDarkMode ? Colors.white : Colors.black,
+                    actions: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37).withOpacity(0.3),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.share,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          onPressed: () {
+                            _showShareOptions(context, displayBook);
+                          },
+                        ),
                       ),
-                      onPressed: () {
-                        if (widget.book != null) {
-                          _showShareOptions(context);
-                        }
-                      },
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 12,
+                        ),
+                        child: StreamBuilder<bool>(
+                          stream: _firestoreService.isBookInCollection(
+                            displayBook.id,
+                          ),
+                          builder: (context, snapshot) {
+                            final isFavorite = snapshot.data ?? false;
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: isFavorite
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFFD4AF37),
+                                          Color(0xFFFFD700),
+                                        ],
+                                      )
+                                    : null,
+                                color: isFavorite
+                                    ? null
+                                    : (isDarkMode
+                                          ? const Color(0xFF2A2A2A)
+                                          : const Color(0xFFF5F5F5)),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFD4AF37,
+                                  ).withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavorite
+                                      ? Colors.black
+                                      : (isDarkMode
+                                            ? Colors.white
+                                            : Colors.black),
+                                ),
+                                onPressed: () {
+                                  if (isFavorite) {
+                                    _firestoreService.removeFromCollection(
+                                      displayBook.id,
+                                    );
+                                  } else {
+                                    _firestoreService.addToCollection(
+                                      displayBook.id,
+                                    );
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                    flexibleSpace: Container(
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.black : Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 12,
-                    ),
-                    child: StreamBuilder<bool>(
-                      stream: widget.book != null
-                          ? _firestoreService.isBookInCollection(
-                              widget.book!.id,
-                            )
-                          : Stream.value(false),
-                      builder: (context, snapshot) {
-                        final isFavorite = snapshot.data ?? false;
-                        return Container(
+
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 40,
+                            horizontal: 24,
+                          ),
                           decoration: BoxDecoration(
-                            gradient: isFavorite
-                                ? const LinearGradient(
-                                    colors: [
-                                      Color(0xFFD4AF37),
-                                      Color(0xFFFFD700),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: isDarkMode
+                                  ? [Colors.black, const Color(0xFF1A1A1A)]
+                                  : [Colors.white, const Color(0xFFF5F5F5)],
+                            ),
+                          ),
+                          child: Center(
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: Container(
+                                    margin: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFFD4AF37,
+                                          ).withOpacity(0.3),
+                                          blurRadius: 60,
+                                          spreadRadius: 10,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 220,
+                                  height: 320,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: const Color(
+                                        0xFFD4AF37,
+                                      ).withOpacity(0.3),
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.4),
+                                        blurRadius: 30,
+                                        offset: const Offset(0, 15),
+                                      ),
                                     ],
-                                  )
-                                : null,
-                            color: isFavorite
-                                ? null
-                                : (isDarkMode
-                                      ? const Color(0xFF2A2A2A)
-                                      : const Color(0xFFF5F5F5)),
-                            borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(18),
+                                    child: _buildBookImage(
+                                      displayBook.imageUrl,
+                                      isDarkMode: isDarkMode,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 10,
+                                  left: 10,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Colors.red, Color(0xFFD32F2F)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.red.withOpacity(0.4),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Text(
+                                      '-20%',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // INFO HEADER YANG REAL-TIME
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isDarkMode
+                                  ? [
+                                      const Color(0xFF2A2A2A),
+                                      const Color(0xFF1F1F1F),
+                                    ]
+                                  : [Colors.white, const Color(0xFFFAFAFA)],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: const Color(0xFFD4AF37).withOpacity(0.3),
                               width: 1.5,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: IconButton(
-                            icon: Icon(
-                              isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: isFavorite
-                                  ? Colors.black
-                                  : (isDarkMode ? Colors.white : Colors.black),
-                            ),
-                            onPressed: () {
-                              if (widget.book != null) {
-                                if (isFavorite) {
-                                  _firestoreService.removeFromCollection(
-                                    widget.book!.id,
-                                  );
-                                } else {
-                                  _firestoreService.addToCollection(
-                                    widget.book!.id,
-                                  );
-                                }
-                              }
-                            },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildRatingItem(
+                                icon: Icons.star,
+                                // Gunakan data real-time dari displayBook
+                                value: (displayBook.rating ?? 0.0)
+                                    .toStringAsFixed(1),
+                                label: 'Rating',
+                                isDarkMode: isDarkMode,
+                              ),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: Colors.grey.withOpacity(0.3),
+                              ),
+                              _buildRatingItem(
+                                icon: Icons.people,
+                                value: '${displayBook.voters ?? 0}',
+                                label: 'Voters',
+                                isDarkMode: isDarkMode,
+                              ),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: Colors.grey.withOpacity(0.3),
+                              ),
+                              _buildRatingItem(
+                                icon: Icons.local_fire_department,
+                                value: (displayBook.price ?? 0) >= 1000
+                                    ? '${(displayBook.price! / 1000).toStringAsFixed(0)}k'
+                                    : '${displayBook.price}',
+                                label: 'Harga',
+                                isDarkMode: isDarkMode,
+                              ),
+                            ],
                           ),
-                        );
-                      },
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                      colors: [
+                                        Color(0xFFD4AF37),
+                                        Color(0xFFFFD700),
+                                      ],
+                                    ).createShader(bounds),
+                                child: Text(
+                                  displayBook.title,
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
+                                    height: 1.3,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFFD4AF37),
+                                          Color(0xFFFFD700),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      'by ${displayBook.author}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 28),
+
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: isDarkMode
+                                        ? [
+                                            const Color(0xFF2A2A2A),
+                                            const Color(0xFF1F1F1F),
+                                          ]
+                                        : [
+                                            Colors.white,
+                                            const Color(0xFFFAFAFA),
+                                          ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFFD4AF37,
+                                    ).withOpacity(0.3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 4,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFFD4AF37),
+                                                Color(0xFFFFD700),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              2,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Sinopsis',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      displayBook.description ??
+                                          'Tidak ada deskripsi.',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: isDarkMode
+                                            ? Colors.grey[400]
+                                            : Colors.grey[700],
+                                        height: 1.8,
+                                        letterSpacing: 0.3,
+                                      ),
+                                      textAlign: TextAlign.justify,
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: isDarkMode
+                                        ? [
+                                            const Color(0xFF2A2A2A),
+                                            const Color(0xFF1F1F1F),
+                                          ]
+                                        : [
+                                            Colors.white,
+                                            const Color(0xFFFAFAFA),
+                                          ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFFD4AF37,
+                                    ).withOpacity(0.3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 4,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFFD4AF37),
+                                                Color(0xFFFFD700),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              2,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Detail Buku',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _buildDetailRow(
+                                      icon: Icons.category,
+                                      label: 'Penerbit',
+                                      value: displayBook.publisher ?? 'N/A',
+                                      isDarkMode: isDarkMode,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildDetailRow(
+                                      icon: Icons.numbers,
+                                      label: 'ISBN',
+                                      value: displayBook.isbn ?? 'N/A',
+                                      isDarkMode: isDarkMode,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildDetailRow(
+                                      icon: Icons.format_align_left,
+                                      label: 'Format',
+                                      value: displayBook.format ?? 'Digital',
+                                      isDarkMode: isDarkMode,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildDetailRow(
+                                      icon: Icons.star,
+                                      label: 'Rating',
+                                      value:
+                                          '${(displayBook.rating ?? 0.0).toStringAsFixed(1)}/5.0',
+                                      isDarkMode: isDarkMode,
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 32),
+
+                              // --- BAGIAN ULASAN REAL-TIME ---
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: isDarkMode
+                                      ? const Color(0xFF2A2A2A)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFFD4AF37,
+                                    ).withOpacity(0.3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 4,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFD4AF37),
+                                            borderRadius: BorderRadius.circular(
+                                              2,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Ulasan Pembaca',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // STREAM BUILDER REVIEW
+                                    displayBook.id.isEmpty
+                                        ? const SizedBox()
+                                        : StreamBuilder<List<ReviewModel>>(
+                                            stream: _firestoreService
+                                                .getBookReviewsStream(
+                                                  displayBook.id,
+                                                ),
+                                            builder: (context, snapshot) {
+                                              if (snapshot.connectionState ==
+                                                  ConnectionState.waiting) {
+                                                return const Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                );
+                                              }
+                                              if (!snapshot.hasData ||
+                                                  snapshot.data!.isEmpty) {
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 20,
+                                                      ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      "Belum ada ulasan. Jadilah yang pertama!",
+                                                      style: TextStyle(
+                                                        color: isDarkMode
+                                                            ? Colors.grey
+                                                            : Colors.black54,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+
+                                              final reviews = snapshot.data!;
+
+                                              return ListView.separated(
+                                                shrinkWrap: true,
+                                                physics:
+                                                    const NeverScrollableScrollPhysics(),
+                                                itemCount: reviews.length,
+                                                separatorBuilder: (ctx, i) =>
+                                                    Divider(
+                                                      color: Colors.grey
+                                                          .withOpacity(0.2),
+                                                    ),
+                                                itemBuilder: (context, index) {
+                                                  final review = reviews[index];
+
+                                                  // Decode foto profil jika ada
+                                                  Uint8List? userPhotoBytes;
+                                                  if (review.photoUrl != null &&
+                                                      review
+                                                          .photoUrl!
+                                                          .isNotEmpty) {
+                                                    try {
+                                                      userPhotoBytes =
+                                                          base64Decode(
+                                                            review.photoUrl!,
+                                                          );
+                                                    } catch (_) {}
+                                                  }
+
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 8.0,
+                                                        ),
+                                                    child: Row(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        CircleAvatar(
+                                                          backgroundColor:
+                                                              Colors.grey[300],
+                                                          backgroundImage:
+                                                              userPhotoBytes !=
+                                                                  null
+                                                              ? MemoryImage(
+                                                                  userPhotoBytes,
+                                                                )
+                                                              : null,
+                                                          child:
+                                                              userPhotoBytes ==
+                                                                  null
+                                                              ? const Icon(
+                                                                  Icons.person,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                )
+                                                              : null,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 12,
+                                                        ),
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                children: [
+                                                                  Text(
+                                                                    review
+                                                                        .userName,
+                                                                    style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color:
+                                                                          isDarkMode
+                                                                          ? Colors.white
+                                                                          : Colors.black,
+                                                                    ),
+                                                                  ),
+                                                                  Text(
+                                                                    DateFormat(
+                                                                      'dd MMM yyyy',
+                                                                    ).format(
+                                                                      review
+                                                                          .timestamp,
+                                                                    ),
+                                                                    style: TextStyle(
+                                                                      fontSize:
+                                                                          10,
+                                                                      color: Colors
+                                                                          .grey,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                children: List.generate(5, (
+                                                                  starIndex,
+                                                                ) {
+                                                                  return Icon(
+                                                                    starIndex <
+                                                                            review.rating
+                                                                        ? Icons
+                                                                              .star
+                                                                        : Icons
+                                                                              .star_border,
+                                                                    size: 14,
+                                                                    color: Colors
+                                                                        .amber,
+                                                                  );
+                                                                }),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 6,
+                                                              ),
+                                                              Text(
+                                                                review
+                                                                        .comment
+                                                                        .isEmpty
+                                                                    ? "Tidak ada komentar."
+                                                                    : review
+                                                                          .comment,
+                                                                style: TextStyle(
+                                                                  color:
+                                                                      isDarkMode
+                                                                      ? Colors
+                                                                            .grey[300]
+                                                                      : Colors
+                                                                            .black87,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
-                flexibleSpace: Container(
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? Colors.black : Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
+              ),
+
+              bottomNavigationBar: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.black : Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFD4AF37).withOpacity(0.4),
+                                blurRadius: 15,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _showDirectPurchaseModal(context, displayBook);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.shopping_bag,
+                                  color: Colors.black,
+                                  size: 22,
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Beli Sekarang',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37),
+                            width: 2,
+                          ),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            // Gunakan displayBook agar data yang masuk keranjang adalah data terbaru
+                            _firestoreService.addToCart(displayBook);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Buku ditambahkan ke keranjang'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          padding: const EdgeInsets.all(16),
+                          icon: const Icon(
+                            Icons.shopping_cart_outlined,
+                            color: Color(0xFFD4AF37),
+                            size: 24,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 40,
-                        horizontal: 24,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: isDarkMode
-                              ? [Colors.black, const Color(0xFF1A1A1A)]
-                              : [Colors.white, const Color(0xFFF5F5F5)],
-                        ),
-                      ),
-                      child: Center(
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Container(
-                                margin: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFFD4AF37,
-                                      ).withOpacity(0.3),
-                                      blurRadius: 60,
-                                      spreadRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 220,
-                              height: 320,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(
-                                    0xFFD4AF37,
-                                  ).withOpacity(0.3),
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 15),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: widget.book != null
-                                    ? _buildBookImage(
-                                        widget.book!.imageUrl,
-                                        isDarkMode: isDarkMode,
-                                      )
-                                    : Image.network(
-                                        'https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?w=400',
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Container(
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    begin: Alignment.topLeft,
-                                                    end: Alignment.bottomRight,
-                                                    colors: [
-                                                      Colors.grey[800]!,
-                                                      Colors.grey[900]!,
-                                                    ],
-                                                  ),
-                                                ),
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.book,
-                                                    size: 80,
-                                                    color: Colors.white54,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 10,
-                              left: 10,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [Colors.red, Color(0xFFD32F2F)],
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.red.withOpacity(0.4),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: const Text(
-                                  '-20%',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isDarkMode
-                              ? [
-                                  const Color(0xFF2A2A2A),
-                                  const Color(0xFF1F1F1F),
-                                ]
-                              : [Colors.white, const Color(0xFFFAFAFA)],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(0xFFD4AF37).withOpacity(0.3),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildRatingItem(
-                            icon: Icons.star,
-                            value: '${widget.book?.rating ?? 0.0}',
-                            label: 'Rating',
-                            isDarkMode: isDarkMode,
-                          ),
-                          Container(
-                            width: 1,
-                            height: 40,
-                            color: Colors.grey.withOpacity(0.3),
-                          ),
-                          _buildRatingItem(
-                            icon: Icons.people,
-                            value: '${widget.book?.voters ?? 0} K',
-                            label: 'Voters',
-                            isDarkMode: isDarkMode,
-                          ),
-                          Container(
-                            width: 1,
-                            height: 40,
-                            color: Colors.grey.withOpacity(0.3),
-                          ),
-                          _buildRatingItem(
-                            icon: Icons.local_fire_department,
-                            value:
-                                '${(widget.book?.price ?? 0).toStringAsFixed(0)}',
-                            label: 'Harga',
-                            isDarkMode: isDarkMode,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
-                              colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                            ).createShader(bounds),
-                            child: Text(
-                              widget.book?.title ?? "Book Title",
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w900,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                                height: 1.3,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFD4AF37),
-                                      Color(0xFFFFD700),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  'by ${widget.book?.author ?? "Unknown Author"}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: isDarkMode
-                                    ? [
-                                        const Color(0xFF2A2A2A),
-                                        const Color(0xFF1F1F1F),
-                                      ]
-                                    : [Colors.white, const Color(0xFFFAFAFA)],
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFFD4AF37).withOpacity(0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 4,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFFD4AF37),
-                                            Color(0xFFFFD700),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Sinopsis',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  widget.book?.description ??
-                                      'Tidak ada deskripsi.',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: isDarkMode
-                                        ? Colors.grey[400]
-                                        : Colors.grey[700],
-                                    height: 1.8,
-                                    letterSpacing: 0.3,
-                                  ),
-                                  textAlign: TextAlign.justify,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: isDarkMode
-                                    ? [
-                                        const Color(0xFF2A2A2A),
-                                        const Color(0xFF1F1F1F),
-                                      ]
-                                    : [Colors.white, const Color(0xFFFAFAFA)],
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFFD4AF37).withOpacity(0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 4,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFFD4AF37),
-                                            Color(0xFFFFD700),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Detail Buku',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                _buildDetailRow(
-                                  icon: Icons.category,
-                                  label: 'Penerbit',
-                                  value: widget.book?.publisher ?? 'N/A',
-                                  isDarkMode: isDarkMode,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDetailRow(
-                                  icon: Icons.numbers,
-                                  label: 'ISBN',
-                                  value: widget.book?.isbn ?? 'N/A',
-                                  isDarkMode: isDarkMode,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDetailRow(
-                                  icon: Icons.format_align_left,
-                                  label: 'Format',
-                                  value: widget.book?.format ?? 'Digital',
-                                  isDarkMode: isDarkMode,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDetailRow(
-                                  icon: Icons.star,
-                                  label: 'Rating',
-                                  value: '${widget.book?.rating ?? 0.0}/5.0',
-                                  isDarkMode: isDarkMode,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-                          
-                          // --- BAGIAN ULASAN REAL-TIME ---
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFFD4AF37).withOpacity(0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 4, height: 24,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFD4AF37),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Ulasan Pembaca',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                
-                                // STREAM BUILDER REVIEW
-                                widget.book == null 
-                                ? const SizedBox()
-                                : StreamBuilder<List<ReviewModel>>(
-                                    stream: _firestoreService.getBookReviewsStream(widget.book!.id),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState == ConnectionState.waiting) {
-                                        return const Center(child: CircularProgressIndicator());
-                                      }
-                                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 20),
-                                          child: Center(
-                                            child: Text(
-                                              "Belum ada ulasan. Jadilah yang pertama!",
-                                              style: TextStyle(color: isDarkMode ? Colors.grey : Colors.black54),
-                                            ),
-                                          ),
-                                        );
-                                      }
-
-                                      final reviews = snapshot.data!;
-                                      
-                                      return ListView.separated(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemCount: reviews.length,
-                                        separatorBuilder: (ctx, i) => Divider(color: Colors.grey.withOpacity(0.2)),
-                                        itemBuilder: (context, index) {
-                                          final review = reviews[index];
-                                          
-                                          // Decode foto profil jika ada
-                                          Uint8List? userPhotoBytes;
-                                          if (review.photoUrl != null && review.photoUrl!.isNotEmpty) {
-                                            try {
-                                              userPhotoBytes = base64Decode(review.photoUrl!);
-                                            } catch (_) {}
-                                          }
-
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                            child: Row(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                CircleAvatar(
-                                                  backgroundColor: Colors.grey[300],
-                                                  backgroundImage: userPhotoBytes != null 
-                                                      ? MemoryImage(userPhotoBytes) 
-                                                      : null,
-                                                  child: userPhotoBytes == null 
-                                                      ? const Icon(Icons.person, color: Colors.grey) 
-                                                      : null,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            review.userName,
-                                                            style: TextStyle(
-                                                              fontWeight: FontWeight.bold,
-                                                              color: isDarkMode ? Colors.white : Colors.black,
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            DateFormat('dd MMM yyyy').format(review.timestamp),
-                                                            style: TextStyle(
-                                                              fontSize: 10,
-                                                              color: Colors.grey,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        children: List.generate(5, (starIndex) {
-                                                          return Icon(
-                                                            starIndex < review.rating ? Icons.star : Icons.star_border,
-                                                            size: 14,
-                                                            color: Colors.amber,
-                                                          );
-                                                        }),
-                                                      ),
-                                                      const SizedBox(height: 6),
-                                                      Text(
-                                                        review.comment.isEmpty ? "Tidak ada komentar." : review.comment,
-                                                        style: TextStyle(
-                                                          color: isDarkMode ? Colors.grey[300] : Colors.black87,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 100),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          bottomNavigationBar: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.black : Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                        ),
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFD4AF37).withOpacity(0.4),
-                            blurRadius: 15,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          _showDirectPurchaseModal(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.shopping_bag,
-                              color: Colors.black,
-                              size: 22,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Beli Sekarang',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? const Color(0xFF2A2A2A)
-                          : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: const Color(0xFFD4AF37),
-                        width: 2,
-                      ),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        if (widget.book != null) {
-                          _firestoreService.addToCart(widget.book!);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Buku ditambahkan ke keranjang'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                      padding: const EdgeInsets.all(16),
-                      icon: const Icon(
-                        Icons.shopping_cart_outlined,
-                        color: Color(0xFFD4AF37),
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -1244,8 +1331,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
-  void _showShareOptions(BuildContext context) {
-    final book = widget.book!;
+  void _showShareOptions(BuildContext context, BookModel book) {
     final shareText =
         'Cek buku "${book.title}" oleh ${book.author}: https://tokonovel.com/book/${book.id}';
     final whatsappUrl = 'https://wa.me/?text=${Uri.encodeComponent(shareText)}';
