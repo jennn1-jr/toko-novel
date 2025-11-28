@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -26,18 +25,19 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final ScrollController _scrollController = ScrollController();
+  // Viewport fraction: seberapa lebar item buku terlihat
   final PageController _pageController = PageController(viewportFraction: 0.35);
   final TextEditingController _searchController = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
   Timer? _autoScrollTimer;
-  int _currentPage = 0;
   int _selectedIndex = 0;
   bool _isPaused = false;
-  bool _isLoadingBooks = true;
+  String _searchQuery = "";
 
-  late List<BookModel> _allBooks = [];
-  late List<BookModel> _filteredBooks = [];
+  // [FIX] Simpan stream dalam variabel agar tidak reload terus-menerus
+  late Stream<List<BookModel>> _popularBooksStream;
 
   final List<Category> categories = [
     Category(name: "All", icon: Icons.apps),
@@ -51,88 +51,43 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    // [FIX] Inisialisasi stream HANYA SEKALI di sini
+    _popularBooksStream = getPopularBooksStream();
+
     _startAutoScroll();
-    _searchController.addListener(_filterBooks);
-    _loadPopularBooksFromFirestore();
-  }
-
-  /// Load 5 random popular books from Firestore
-  Future<void> _loadPopularBooksFromFirestore() async {
-    try {
-      final slugs = [
-        'laskar-pelangi-edisi-50',
-        'dilan-dia-adalah-dilanku-tahun-1990',
-        'solo-leveling',
-        'seporsi-mie-ayam-sebelum-mati',
-        'the-lord-of-the-rings-kembalinya-sang-raja',
-      ];
-
-      final List<BookModel> books = [];
-
-      for (final slug in slugs) {
-        try {
-          final doc = await _db
-              .collection('books')
-              .where('slug', isEqualTo: slug)
-              .limit(1)
-              .get();
-
-          if (doc.docs.isNotEmpty) {
-            final bookData = doc.docs.first.data();
-            final book = BookModel.fromMap(bookData, doc.docs.first.id);
-            books.add(book);
-            print('DEBUG: Loaded book from DB: ${book.title}');
-          }
-        } catch (e) {
-          print('DEBUG: Error loading slug=$slug: $e');
-        }
-      }
-
+    _searchController.addListener(() {
       setState(() {
-        _allBooks = books;
-        _filteredBooks = List.from(_allBooks);
-        _isLoadingBooks = false;
+        _searchQuery = _searchController.text.toLowerCase();
       });
-
-      print('DEBUG: Total books loaded: ${_allBooks.length}');
-    } catch (e) {
-      print('ERROR loading books: $e');
-      setState(() {
-        _isLoadingBooks = false;
-      });
-    }
-  }
-
-  void _filterBooks() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredBooks = List.from(_allBooks);
-      } else {
-        _filteredBooks = _allBooks.where((book) {
-          return book.title.toLowerCase().contains(query) ||
-              book.author.toLowerCase().contains(query);
-        }).toList();
-      }
-      // Reset page controller if filtered list changes significantly
-      if (_pageController.hasClients) {
-        _pageController.jumpToPage(0);
-      }
-      _currentPage = 0;
     });
+  }
+
+  Stream<List<BookModel>> getPopularBooksStream() {
+    final slugs = [
+      'laskar-pelangi-edisi-50',
+      'dilan-dia-adalah-dilanku-tahun-1990',
+      'solo-leveling',
+      'seporsi-mie-ayam-sebelum-mati',
+      'the-lord-of-the-rings-kembalinya-sang-raja',
+    ];
+
+    return _db
+        .collection('books')
+        .where('slug', whereIn: slugs)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return BookModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!_isPaused &&
-          _pageController.hasClients &&
-          _filteredBooks.isNotEmpty) {
-        int prevPage = _currentPage - 1;
-        if (prevPage < 0) {
-          prevPage = _filteredBooks.length - 1;
-        }
-        _pageController.animateToPage(
-          prevPage,
+      // Scroll hanya jika user tidak sedang hover/menyentuh dan ada data
+      if (!_isPaused && _pageController.hasClients) {
+        // Gunakan animateToPage ke page saat ini + 1
+        _pageController.nextPage(
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeInOut,
         );
@@ -145,7 +100,6 @@ class _DashboardPageState extends State<DashboardPage> {
     _autoScrollTimer?.cancel();
     _scrollController.dispose();
     _pageController.dispose();
-    _searchController.removeListener(_filterBooks); // Remove listener
     _searchController.dispose();
     super.dispose();
   }
@@ -196,9 +150,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: isDarkMode ? Colors.black : Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(
-                          (0.1 * 255).round(),
-                        ), // Replaced withOpacity
+                        color: Colors.black.withAlpha((0.1 * 255).round()),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -306,36 +258,28 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                       const SizedBox(width: 24),
-                      // Mengganti GestureDetector + Container dengan StreamBuilder
                       StreamBuilder<UserProfile?>(
                         stream: _firestoreService.getUserProfileStream(),
                         builder: (context, snapshot) {
-                          // Tentukan nilai default
                           String displayName = 'User';
                           Uint8List? photoBytes;
 
-                          // Jika data sudah datang dari stream
                           if (snapshot.hasData && snapshot.data != null) {
                             final userProfile = snapshot.data!;
                             displayName = userProfile.name.isNotEmpty
                                 ? userProfile.name
                                 : 'User';
-
-                            // Coba decode foto Base64
                             if (userProfile.photoUrl.isNotEmpty) {
                               try {
                                 photoBytes = base64Decode(userProfile.photoUrl);
                               } catch (e) {
-                                print("Gagal decode foto di dashboard: $e");
-                                photoBytes = null; // Gagal, kembali ke default
+                                photoBytes = null;
                               }
                             }
                           }
 
-                          // Tampilkan widget (GestureDetector)
                           return GestureDetector(
                             onTap: () {
-                              // Cukup navigasi, stream akan update otomatis
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -378,12 +322,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                           ? const Color(0xFF2A2A2A)
                                           : Colors.white,
                                       radius: 16,
-                                      // Logika untuk menampilkan foto
                                       backgroundImage: (photoBytes != null)
                                           ? MemoryImage(photoBytes)
                                           : null,
                                       child: (photoBytes != null)
-                                          ? null // Sembunyikan ikon jika ada foto
+                                          ? null
                                           : const Icon(
                                               Icons.person,
                                               color: Color(0xFFD4AF37),
@@ -393,7 +336,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
-                                    displayName, // Tampilkan nama dari stream
+                                    displayName,
                                     style: TextStyle(
                                       color: isDarkMode
                                           ? Colors.white
@@ -416,9 +359,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFD4AF37).withAlpha(
-                              (0.3 * 255).round(),
-                            ), // Replaced withOpacity
+                            color: const Color(
+                              0xFFD4AF37,
+                            ).withAlpha((0.3 * 255).round()),
                             width: 1.5,
                           ),
                         ),
@@ -445,9 +388,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFD4AF37).withAlpha(
-                              (0.3 * 255).round(),
-                            ), // Replaced withOpacity
+                            color: const Color(
+                              0xFFD4AF37,
+                            ).withAlpha((0.3 * 255).round()),
                             width: 1.5,
                           ),
                         ),
@@ -501,14 +444,14 @@ class _DashboardPageState extends State<DashboardPage> {
                     border: Border.all(
                       color: const Color(
                         0xFFD4AF37,
-                      ).withAlpha((0.2 * 255).round()), // Replaced withOpacity
+                      ).withAlpha((0.2 * 255).round()),
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withAlpha(
-                          (0.1 * 255).round(),
-                        ), // Replaced withOpacity
+                        color: const Color(
+                          0xFFD4AF37,
+                        ).withAlpha((0.1 * 255).round()),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -557,9 +500,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withAlpha(
-                                (0.4 * 255).round(),
-                              ), // Replaced withOpacity
+                              color: const Color(
+                                0xFFD4AF37,
+                              ).withAlpha((0.4 * 255).round()),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -567,7 +510,6 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         child: ElevatedButton(
                           onPressed: () {
-                            // Navigate to AllBooksPage showing all novels
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -659,20 +601,28 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
 
+              // --- STREAM BUILDER UNTUK BOOKS (INFINITE REAL-TIME) ---
               SliverToBoxAdapter(
                 child: MouseRegion(
                   onEnter: (_) => setState(() => _isPaused = true),
                   onExit: (_) => setState(() => _isPaused = false),
                   child: SizedBox(
                     height: 500,
-                    child: _isLoadingBooks
-                        ? const Center(
+                    child: StreamBuilder<List<BookModel>>(
+                      // [FIX] Gunakan variabel stream yang di-init di initState
+                      stream: _popularBooksStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
                             child: CircularProgressIndicator(
                               color: Color(0xFFD4AF37),
                             ),
-                          )
-                        : _filteredBooks.isEmpty
-                        ? Center(
+                          );
+                        }
+
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return Center(
                             child: Text(
                               'Tidak ada buku tersedia',
                               style: TextStyle(
@@ -682,89 +632,89 @@ class _DashboardPageState extends State<DashboardPage> {
                                 fontSize: 16,
                               ),
                             ),
-                          )
-                        : PageView.builder(
-                            controller: _pageController,
-                            onPageChanged: (index) {
-                              setState(() => _currentPage = index);
-                            },
-                            itemCount: _filteredBooks.length,
-                            itemBuilder: (context, index) {
-                              return AnimatedBuilder(
-                                animation: _pageController,
-                                builder: (context, child) {
-                                  double value = 1.0;
-                                  if (_pageController.position.haveDimensions) {
-                                    value = _pageController.page! - index;
-                                    value = (1 - (value.abs() * 0.25)).clamp(
-                                      0.85,
-                                      1.0,
-                                    );
-                                  }
-                                  return Center(
-                                    child: Transform.scale(
-                                      scale: value,
-                                      child: Opacity(
-                                        opacity: value,
-                                        child: child,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: BookCard(
-                                  book: _filteredBooks[index],
-                                  isDarkMode: isDarkMode,
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ),
-              ),
+                          );
+                        }
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 30),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _filteredBooks.length, // Use filtered books
-                      (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 5),
-                        height: 10,
-                        width: _currentPage == index ? 30 : 10,
-                        decoration: BoxDecoration(
-                          gradient: _currentPage == index
-                              ? const LinearGradient(
-                                  colors: [
-                                    Color(0xFFD4AF37),
-                                    Color(0xFFFFD700),
-                                  ],
-                                )
-                              : null,
-                          color: _currentPage == index
-                              ? null
-                              : Colors.grey[600],
-                          borderRadius: BorderRadius.circular(5),
-                          boxShadow: _currentPage == index
-                              ? [
-                                  BoxShadow(
-                                    color: const Color(0xFFD4AF37).withAlpha(
-                                      (0.5 * 255).round(),
-                                    ), // Replaced withOpacity
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                        final allBooks = snapshot.data!;
+                        // Filter buku
+                        final filteredBooks = _searchQuery.isEmpty
+                            ? allBooks
+                            : allBooks.where((book) {
+                                return book.title.toLowerCase().contains(
+                                      _searchQuery,
+                                    ) ||
+                                    book.author.toLowerCase().contains(
+                                      _searchQuery,
+                                    );
+                              }).toList();
+
+                        if (filteredBooks.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'Buku tidak ditemukan',
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white60
+                                    : Colors.black54,
+                                fontSize: 16,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return PageView.builder(
+                          controller: _pageController,
+                          // itemCount dihapus agar Infinite Scroll
+                          onPageChanged: (index) {
+                            // Gunakan modulo (%) untuk menentukan indikator aktif
+                            // Hindari setState yang tidak perlu jika index tidak berubah (opsional)
+                            // setState(() => _currentPage = index % filteredBooks.length);
+                          },
+                          itemBuilder: (context, index) {
+                            // Gunakan modulo (%) untuk mengambil data buku secara berulang
+                            final bookIndex = index % filteredBooks.length;
+                            final book = filteredBooks[bookIndex];
+
+                            return AnimatedBuilder(
+                              animation: _pageController,
+                              builder: (context, child) {
+                                double value = 1.0;
+                                if (_pageController.position.haveDimensions) {
+                                  value = _pageController.page! - index;
+                                  value = (1 - (value.abs() * 0.25)).clamp(
+                                    0.85,
+                                    1.0,
+                                  );
+                                }
+                                return Center(
+                                  child: Transform.scale(
+                                    scale: value,
+                                    child: Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
                                   ),
-                                ]
-                              : null,
-                        ),
-                      ),
+                                );
+                              },
+                              child: BookCard(
+                                book: book,
+                                isDarkMode: isDarkMode,
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
 
+              // --- INDIKATOR HALAMAN ---
+              // Kita tidak bisa menggunakan StreamBuilder lagi untuk indikator karena akan double stream
+              // Lebih baik hilangkan saja indikator ini jika menggunakan Infinite Scroll
+              // ATAU gunakan static indicator jika jumlah buku sedikit.
+              // Untuk simplifikasi dan menghindari bug kedepannya, bagian indikator saya hapus
+              // karena infinite scroll sulit dilacak posisi pastinya dengan indicator titik.
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(40, 40, 40, 24),
@@ -840,9 +790,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF1B5E20).withAlpha(
-                            (0.4 * 255).round(),
-                          ), // Replaced withOpacity
+                          color: const Color(
+                            0xFF1B5E20,
+                          ).withAlpha((0.4 * 255).round()),
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -853,9 +803,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(
-                              (0.2 * 255).round(),
-                            ), // Replaced withOpacity
+                            color: Colors.white.withAlpha((0.2 * 255).round()),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -911,9 +859,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFD4AF37).withAlpha(
-                                  (0.5 * 255).round(),
-                                ), // Replaced withOpacity
+                                color: const Color(
+                                  0xFFD4AF37,
+                                ).withAlpha((0.5 * 255).round()),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -1020,16 +968,12 @@ class BookCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(
-            0xFFD4AF37,
-          ).withAlpha((0.3 * 255).round()), // Replaced withOpacity
+          color: const Color(0xFFD4AF37).withAlpha((0.3 * 255).round()),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(
-              (0.2 * 255).round(),
-            ), // Replaced withOpacity
+            color: Colors.black.withAlpha((0.2 * 255).round()),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -1067,7 +1011,6 @@ class BookCard extends StatelessWidget {
                         );
                       },
                       errorBuilder: (context, error, stackTrace) {
-                        print('DEBUG: BookCard image error: $error');
                         return Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -1102,9 +1045,7 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(
-                              (0.3 * 255).round(),
-                            ), // Replaced withOpacity
+                            color: Colors.black.withAlpha((0.3 * 255).round()),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -1115,8 +1056,9 @@ class BookCard extends StatelessWidget {
                         children: [
                           const Icon(Icons.star, color: Colors.black, size: 16),
                           const SizedBox(width: 4),
+                          // Tampilkan Rating Real-Time
                           Text(
-                            book.rating.toString(),
+                            (book.rating ?? 0.0).toStringAsFixed(1),
                             style: const TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
@@ -1164,8 +1106,9 @@ class BookCard extends StatelessWidget {
                       children: [
                         Icon(Icons.people, color: Colors.grey[500], size: 14),
                         const SizedBox(width: 6),
+                        // Tampilkan Voters Real-Time
                         Text(
-                          book.voters ?? '',
+                          book.voters ?? '0',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[500],
@@ -1183,9 +1126,9 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD4AF37).withAlpha(
-                              (0.4 * 255).round(),
-                            ), // Replaced withOpacity
+                            color: const Color(
+                              0xFFD4AF37,
+                            ).withAlpha((0.4 * 255).round()),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -1252,11 +1195,11 @@ class Category {
 String _getCategorySlug(String categoryName) {
   switch (categoryName) {
     case 'All':
-      return 'buku/semua'; // All books
+      return 'buku/semua';
     case 'Romance':
       return 'buku/romance';
     case 'Fiction':
-      return 'buku/fiksi-sastra'; // Novel
+      return 'buku/fiksi-sastra';
     case 'Crime':
       return 'buku/crime';
     case 'Science':
@@ -1293,16 +1236,12 @@ class CategoryCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(
-            0xFFD4AF37,
-          ).withAlpha((0.3 * 255).round()), // Replaced withOpacity
+          color: const Color(0xFFD4AF37).withAlpha((0.3 * 255).round()),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(
-              (0.1 * 255).round(),
-            ), // Replaced withOpacity
+            color: Colors.black.withAlpha((0.1 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1313,9 +1252,7 @@ class CategoryCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            // Navigate to AllBooksPage when category is tapped
             if (category.name == 'All') {
-              // For "All" category, show all novels from both komik and fiksi-sastra
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -1326,7 +1263,6 @@ class CategoryCard extends StatelessWidget {
                 ),
               );
             } else {
-              // For other categories, navigate with appropriate slug
               final slug = _getCategorySlug(category.name);
               Navigator.push(
                 context,
@@ -1353,7 +1289,7 @@ class CategoryCard extends StatelessWidget {
                     BoxShadow(
                       color: const Color(
                         0xFFD4AF37,
-                      ).withAlpha((0.3 * 255).round()), // Replaced withOpacity
+                      ).withAlpha((0.3 * 255).round()),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
