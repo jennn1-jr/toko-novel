@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class BookModel {
   final String id;          // doc id atau field "id"
   final String genreId;     // "genre_id" di data kamu adalah string angka ("1","2",...)

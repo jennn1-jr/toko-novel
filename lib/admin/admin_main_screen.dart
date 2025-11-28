@@ -56,8 +56,6 @@ class AdminContent extends StatelessWidget {
         return const ManageOrdersScreen();
       case AdminMenuItem.profile:
         return const Center(child: Text("Halaman Profil Admin")); // Placeholder
-      default:
-        return const AdminDashboardScreen();
     }
   }
 }

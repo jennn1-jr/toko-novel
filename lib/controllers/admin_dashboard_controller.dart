@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tokonovel/models/order_model.dart';
 import 'package:tokonovel/services/firestore_service.dart';
 
 class ChartData {

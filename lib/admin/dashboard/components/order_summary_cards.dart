@@ -8,7 +8,6 @@ class OrderSummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<AdminDashboardController>();
     final size = MediaQuery.of(context).size;
 
     return Responsive(

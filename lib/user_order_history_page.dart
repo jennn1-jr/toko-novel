@@ -112,7 +112,6 @@ class RatingWidget extends StatelessWidget {
       stream: firestoreService.getUserRatingStream(bookId),
       builder: (context, snapshot) {
         final hasRated = snapshot.hasData && snapshot.data != null;
-        final isDarkMode = backgroundColorNotifier.value == const Color(0xFF1A1A1A);
         final goldColor = const Color(0xFFD4AF37);
 
         return SizedBox(

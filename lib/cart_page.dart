@@ -724,14 +724,14 @@ class _CartItemCardState extends State<CartItemCard> {
   @override
   void initState() {
     super.initState();
-    _fixedImageUrl = coverProxy(widget.item.imageUrl ?? '');
+    _fixedImageUrl = coverProxy(widget.item.imageUrl);
   }
 
   @override
   void didUpdateWidget(covariant CartItemCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.item.imageUrl != oldWidget.item.imageUrl) {
-      _fixedImageUrl = coverProxy(widget.item.imageUrl ?? '');
+      _fixedImageUrl = coverProxy(widget.item.imageUrl);
     }
   }
 

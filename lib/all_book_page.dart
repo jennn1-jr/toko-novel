@@ -31,13 +31,8 @@ class _AllBooksPageState extends State<AllBooksPage> {
   final _scroll = ScrollController();
   final _searchCtl = TextEditingController();
 
-  final int _pageSize = 20;
-
   List<BookModel> _items = [];
-  DocumentSnapshot<BookModel>? _lastDoc;
   bool _loading = false;
-  bool _loadingMore = false;
-  bool _hasMore = true;
 
   List<GenreModel> _categoryGenres = []; // genre ids untuk kategori aktif
   String? _activeGenreId; // bisa null = All
@@ -92,11 +87,9 @@ class _AllBooksPageState extends State<AllBooksPage> {
         print('  - Genre: id=${g.id}, name=${g.name}, slug=${g.slug}');
       }
 
-      // 2) Load page pertama
+      // 2) Load semua buku sekaligus
       _items.clear();
-      _lastDoc = null;
-      _hasMore = true;
-      await _loadNextPage();
+      await _loadAllBooks();
     } catch (e) {
       print('ERROR in _bootstrap: $e');
       if (mounted) {
@@ -109,15 +102,8 @@ class _AllBooksPageState extends State<AllBooksPage> {
     }
   }
 
-  Future<void> _loadNextPage() async {
-    if (!_hasMore) return;
-    if (_loadingMore) return;
-    setState(() => _loadingMore = true);
-
+  Future<void> _loadAllBooks() async {
     try {
-      // Strategy: Fetch all books and filter client-side to avoid complex Firestore indexes
-      Query<BookModel> q = BookRef.col(_db);
-
       // Build list of genre IDs to filter
       List<String> genreIdsToFilter = [];
 
@@ -132,67 +118,34 @@ class _AllBooksPageState extends State<AllBooksPage> {
       }
 
       if (genreIdsToFilter.isEmpty) {
-        print('DEBUG: No genres found for category. Stopping pagination.');
-        _hasMore = false;
+        print('DEBUG: No genres found for category.');
         return;
       }
 
-      // Query: Get books (orderBy title, limit per page)
-      // We'll filter by genre_id client-side to avoid needing composite indexes
-      Query<BookModel> baseQuery = q.orderBy('title').limit(_pageSize * 3);
+      // Query: Get ALL books, filter client-side
+      Query<BookModel> q = BookRef.col(_db).orderBy('title');
+      final snap = await q.get();
 
-      if (_lastDoc != null) {
-        baseQuery = baseQuery.startAfterDocument(_lastDoc!);
-      }
+      // Filter docs by genre_id on client side
+      final allFetched = snap.docs.map((d) => d.data()).toList();
+      final filtered = allFetched
+          .where((b) => genreIdsToFilter.contains(b.genreId))
+          .toList();
 
-      final snap = await baseQuery.get();
+      print('DEBUG: Fetched ${allFetched.length} total books, ${filtered.length} after genre filter');
 
-      if (snap.docs.isEmpty) {
-        print('DEBUG: No more books available');
-        _hasMore = false;
-      } else {
-        // Filter docs by genre_id on client side
-        final allFetched = snap.docs.map((d) => d.data()).toList();
+      // Apply search filter
+      final searchFiltered = _applySearch(filtered);
+      print('DEBUG: Books after search filter: ${searchFiltered.length}');
 
-        // Client-side filter: only keep books with matching genre_id
-        final filtered = allFetched
-            .where((b) => genreIdsToFilter.contains(b.genreId))
-            .toList();
-
-        print(
-          'DEBUG: Fetched ${allFetched.length} books, ${filtered.length} after genre filter',
-        );
-
-        if (filtered.isEmpty) {
-          // No books found for this genre in this batch
-          print('DEBUG: No books matching genres in this batch');
-          _lastDoc = snap.docs.last;
-          // Continue to next batch
-        } else {
-          _lastDoc = snap.docs.last;
-
-          // Apply search filter
-          final searchFiltered = _applySearch(filtered);
-          print('DEBUG: Books after search filter: ${searchFiltered.length}');
-
-          _items.addAll(searchFiltered);
-        }
-
-        // Check if we should continue pagination
-        if (snap.docs.length < (_pageSize * 3)) {
-          _hasMore = false;
-        }
-      }
+      _items = searchFiltered;
     } catch (e) {
-      print('ERROR in _loadNextPage: $e');
+      print('ERROR in _loadAllBooks: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error loading books: $e')));
       }
-      _hasMore = false;
-    } finally {
-      if (mounted) setState(() => _loadingMore = false);
     }
   }
 
@@ -216,21 +169,15 @@ class _AllBooksPageState extends State<AllBooksPage> {
   }
 
   void _onScroll() {
-    if (!_scroll.hasClients || _loadingMore || !_hasMore) return;
-    final threshold =
-        _scroll.position.maxScrollExtent - 400; // 400px sebelum akhir
-    if (_scroll.position.pixels >= threshold) {
-      _loadNextPage();
-    }
+    // No pagination needed - all items loaded
   }
 
   Future<void> _onRefresh() async {
     setState(() {
       _items.clear();
-      _lastDoc = null;
-      _hasMore = true;
     });
-    await _loadNextPage();
+    await _loadAllBooks();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -327,17 +274,16 @@ class _AllBooksPageState extends State<AllBooksPage> {
                               setState(() {
                                 _activeGenreId = newId;
                                 _items.clear();
-                                _lastDoc = null;
-                                _hasMore = true;
                               });
-                              await _loadNextPage();
+                              await _loadAllBooks();
+                              if (mounted) setState(() {});
                             },
                           ),
                         ),
                       ),
 
                       // Grid buku atau empty state
-                      if (_items.isEmpty && !_loading && !_loadingMore)
+                      if (_items.isEmpty && !_loading)
                         SliverToBoxAdapter(
                           child: Center(
                             child: Padding(
@@ -520,23 +466,20 @@ class _AllBooksPageState extends State<AllBooksPage> {
                           ),
                         ),
 
-                      // Loading more & footer
-                      if (_items.isNotEmpty || _loadingMore)
+                      // Footer - semua buku sudah tampil
+                      if (_items.isNotEmpty)
                         SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Column(
                               children: [
-                                if (_loadingMore)
-                                  const CircularProgressIndicator(),
-                                if (!_hasMore && _items.isNotEmpty)
-                                  Text(
-                                    'Sudah semua 🎉',
-                                    style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white60
-                                          : Colors.black54,
-                                    ),
+                                Text(
+                                  'Sudah semua 🎉',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white60
+                                        : Colors.black54,
+                                  ),
                                   ),
                                 const SizedBox(height: 16),
                               ],
