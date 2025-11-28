@@ -36,8 +36,10 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isPaused = false;
   String _searchQuery = "";
 
-  // [FIX] Simpan stream dalam variabel agar tidak reload terus-menerus
-  late Stream<List<BookModel>> _popularBooksStream;
+  // [MODIFIKASI] Variabel untuk menyimpan stream yang aktif (Popular atau All)
+  late Stream<List<BookModel>> _displayedBookStream;
+  // [MODIFIKASI] Variabel untuk judul section
+  String _sectionTitle = "Novel Best Seller";
 
   final List<Category> categories = [
     Category(name: "All", icon: Icons.apps),
@@ -51,15 +53,41 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    // [FIX] Inisialisasi stream HANYA SEKALI di sini
-    _popularBooksStream = getPopularBooksStream();
+    // Awalnya tampilkan buku populer
+    _displayedBookStream = getPopularBooksStream();
 
     _startAutoScroll();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
-      });
-    });
+    
+    // Listener untuk mendeteksi ketikan pencarian
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  // [MODIFIKASI] Logika untuk menukar stream berdasarkan pencarian
+  void _onSearchChanged() {
+    final query = _searchController.text.trim().toLowerCase();
+    
+    // Cek apakah query berubah drastis (misal dari kosong ke ada isi, atau sebaliknya)
+    // untuk menghindari rebuild stream berlebihan jika tidak perlu
+    if (query.isNotEmpty && _searchQuery.isEmpty) {
+       // User mulai mengetik -> Switch ke Semua Buku
+       setState(() {
+         _searchQuery = query;
+         _sectionTitle = "Hasil Pencarian";
+         _displayedBookStream = _firestoreService.getAllBooks(); 
+       });
+    } else if (query.isEmpty && _searchQuery.isNotEmpty) {
+       // User menghapus search -> Balik ke Best Seller
+       setState(() {
+         _searchQuery = query;
+         _sectionTitle = "Novel Best Seller";
+         _displayedBookStream = getPopularBooksStream();
+       });
+    } else {
+       // Hanya update query text untuk filtering
+       setState(() {
+         _searchQuery = query;
+       });
+    }
   }
 
   Stream<List<BookModel>> getPopularBooksStream() {
@@ -76,17 +104,16 @@ class _DashboardPageState extends State<DashboardPage> {
         .where('slug', whereIn: slugs)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return BookModel.fromMap(doc.data(), doc.id);
-          }).toList();
-        });
+      return snapshot.docs.map((doc) {
+        return BookModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
   }
 
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      // Scroll hanya jika user tidak sedang hover/menyentuh dan ada data
-      if (!_isPaused && _pageController.hasClients) {
-        // Gunakan animateToPage ke page saat ini + 1
+      // [MODIFIKASI] Matikan auto-scroll jika sedang mencari (_searchQuery tidak kosong)
+      if (!_isPaused && _pageController.hasClients && _searchQuery.isEmpty) {
         _pageController.nextPage(
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeInOut,
@@ -100,6 +127,7 @@ class _DashboardPageState extends State<DashboardPage> {
     _autoScrollTimer?.cancel();
     _scrollController.dispose();
     _pageController.dispose();
+    _searchController.removeListener(_onSearchChanged); // Hapus listener
     _searchController.dispose();
     super.dispose();
   }
@@ -282,9 +310,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ProfilePage(),
-                                ),
+                                MaterialPageRoute(builder: (context) => const ProfilePage()),
                               );
                             },
                             child: Container(
@@ -359,9 +385,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(
-                              0xFFD4AF37,
-                            ).withAlpha((0.3 * 255).round()),
+                            color: const Color(0xFFD4AF37).withAlpha(
+                              (0.3 * 255).round(),
+                            ),
                             width: 1.5,
                           ),
                         ),
@@ -388,9 +414,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(
-                              0xFFD4AF37,
-                            ).withAlpha((0.3 * 255).round()),
+                            color: const Color(0xFFD4AF37).withAlpha(
+                              (0.3 * 255).round(),
+                            ),
                             width: 1.5,
                           ),
                         ),
@@ -449,9 +475,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(
-                          0xFFD4AF37,
-                        ).withAlpha((0.1 * 255).round()),
+                        color: const Color(0xFFD4AF37).withAlpha(
+                          (0.1 * 255).round(),
+                        ),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -500,9 +526,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(
-                                0xFFD4AF37,
-                              ).withAlpha((0.4 * 255).round()),
+                              color: const Color(0xFFD4AF37).withAlpha(
+                                (0.4 * 255).round(),
+                              ),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -580,9 +606,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         shaderCallback: (bounds) => const LinearGradient(
                           colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
                         ).createShader(bounds),
-                        child: const Text(
-                          'Novel Best Seller',
-                          style: TextStyle(
+                        child: Text(
+                          _sectionTitle, // [MODIFIKASI] Gunakan Judul Variabel
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
@@ -609,11 +635,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: SizedBox(
                     height: 500,
                     child: StreamBuilder<List<BookModel>>(
-                      // [FIX] Gunakan variabel stream yang di-init di initState
-                      stream: _popularBooksStream,
+                      // [MODIFIKASI] Gunakan stream dinamis (Popular atau All)
+                      stream: _displayedBookStream, 
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(
                             child: CircularProgressIndicator(
                               color: Color(0xFFD4AF37),
@@ -641,11 +666,11 @@ class _DashboardPageState extends State<DashboardPage> {
                             ? allBooks
                             : allBooks.where((book) {
                                 return book.title.toLowerCase().contains(
-                                      _searchQuery,
-                                    ) ||
+                                          _searchQuery,
+                                        ) ||
                                     book.author.toLowerCase().contains(
-                                      _searchQuery,
-                                    );
+                                          _searchQuery,
+                                        );
                               }).toList();
 
                         if (filteredBooks.isEmpty) {
@@ -662,17 +687,26 @@ class _DashboardPageState extends State<DashboardPage> {
                           );
                         }
 
+// Tentukan apakah sedang mode cari
+                        final bool isSearching = _searchQuery.isNotEmpty;
+
                         return PageView.builder(
                           controller: _pageController,
-                          // itemCount dihapus agar Infinite Scroll
+                          
+                          // [PERBAIKAN UTAMA]
+                          // Jika sedang mencari, batasi jumlah item sesuai hasil (jangan infinite/null)
+                          // Jika tidak mencari (mode Best Seller), biarkan null (infinite scroll)
+                          itemCount: isSearching ? filteredBooks.length : null,
+                          
                           onPageChanged: (index) {
-                            // Gunakan modulo (%) untuk menentukan indikator aktif
-                            // Hindari setState yang tidak perlu jika index tidak berubah (opsional)
-                            // setState(() => _currentPage = index % filteredBooks.length);
+                            // Update index hanya jika perlu
                           },
+                          
                           itemBuilder: (context, index) {
-                            // Gunakan modulo (%) untuk mengambil data buku secara berulang
-                            final bookIndex = index % filteredBooks.length;
+                            // [PERBAIKAN UTAMA]
+                            // Jika searching, ambil index langsung (0, 1, 2...)
+                            // Jika infinite, gunakan modulo (%) agar berulang
+                            final bookIndex = isSearching ? index : index % filteredBooks.length;
                             final book = filteredBooks[bookIndex];
 
                             return AnimatedBuilder(
@@ -709,12 +743,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
 
-              // --- INDIKATOR HALAMAN ---
-              // Kita tidak bisa menggunakan StreamBuilder lagi untuk indikator karena akan double stream
-              // Lebih baik hilangkan saja indikator ini jika menggunakan Infinite Scroll
-              // ATAU gunakan static indicator jika jumlah buku sedikit.
-              // Untuk simplifikasi dan menghindari bug kedepannya, bagian indikator saya hapus
-              // karena infinite scroll sulit dilacak posisi pastinya dengan indicator titik.
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(40, 40, 40, 24),
@@ -790,9 +818,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(
-                            0xFF1B5E20,
-                          ).withAlpha((0.4 * 255).round()),
+                          color: const Color(0xFF1B5E20).withAlpha(
+                            (0.4 * 255).round(),
+                          ),
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -803,7 +831,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white.withAlpha((0.2 * 255).round()),
+                            color: Colors.white.withAlpha(
+                              (0.2 * 255).round(),
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -859,9 +889,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(
-                                  0xFFD4AF37,
-                                ).withAlpha((0.5 * 255).round()),
+                                color: const Color(0xFFD4AF37).withAlpha(
+                                  (0.5 * 255).round(),
+                                ),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -1045,7 +1075,9 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha((0.3 * 255).round()),
+                            color: Colors.black.withAlpha(
+                              (0.3 * 255).round(),
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -1056,7 +1088,6 @@ class BookCard extends StatelessWidget {
                         children: [
                           const Icon(Icons.star, color: Colors.black, size: 16),
                           const SizedBox(width: 4),
-                          // Tampilkan Rating Real-Time
                           Text(
                             (book.rating ?? 0.0).toStringAsFixed(1),
                             style: const TextStyle(
@@ -1106,7 +1137,6 @@ class BookCard extends StatelessWidget {
                       children: [
                         Icon(Icons.people, color: Colors.grey[500], size: 14),
                         const SizedBox(width: 6),
-                        // Tampilkan Voters Real-Time
                         Text(
                           book.voters ?? '0',
                           style: TextStyle(
@@ -1126,9 +1156,9 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(
-                              0xFFD4AF37,
-                            ).withAlpha((0.4 * 255).round()),
+                            color: const Color(0xFFD4AF37).withAlpha(
+                              (0.4 * 255).round(),
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -1195,11 +1225,11 @@ class Category {
 String _getCategorySlug(String categoryName) {
   switch (categoryName) {
     case 'All':
-      return 'buku/semua';
+      return 'buku/semua'; 
     case 'Romance':
       return 'buku/romance';
     case 'Fiction':
-      return 'buku/fiksi-sastra';
+      return 'buku/fiksi-sastra'; 
     case 'Crime':
       return 'buku/crime';
     case 'Science':
@@ -1287,9 +1317,7 @@ class CategoryCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(
-                        0xFFD4AF37,
-                      ).withAlpha((0.3 * 255).round()),
+                      color: const Color(0xFFD4AF37).withAlpha((0.3 * 255).round()),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
