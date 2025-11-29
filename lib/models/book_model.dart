@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BookModel {
-  final String id;          // doc id atau field "id"
-  final String genreId;     // "genre_id" di data kamu adalah string angka ("1","2",...)
+  final String id; // doc id atau field "id"
+  final String
+  genreId; // "genre_id" di data kamu adalah string angka ("1","2",...)
   final String slug;
   final String title;
   final String author;
@@ -10,11 +11,11 @@ class BookModel {
   final String? description;
   final String? publisher;
   final String? isbn;
-  final int? price;         // di data kamu "price" string angka -> kita cast ke int
+  final int? price; // di data kamu "price" string angka -> kita cast ke int
   final String? format;
   final String? sourceUrl;
-  final double? rating;     // opsional: kalau tidak ada, biarkan null
-  final String? voters;     // opsional
+  final double? rating; // opsional: kalau tidak ada, biarkan null
+  final String? voters; // opsional
   final DateTime? createdAt; // new field for creation timestamp
 
   BookModel({
@@ -34,7 +35,6 @@ class BookModel {
     this.voters,
     this.createdAt,
   });
-
 
   factory BookModel.fromMap(Map<String, dynamic> json, String docId) {
     int? _tryInt(dynamic v) {
@@ -58,7 +58,9 @@ class BookModel {
     }
 
     return BookModel(
-      id: (json['id']?.toString().isNotEmpty == true) ? json['id'].toString() : docId,
+      id: (json['id']?.toString().isNotEmpty == true)
+          ? json['id'].toString()
+          : docId,
       genreId: (json['genre_id'] ?? '').toString(),
       slug: (json['slug'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
@@ -76,30 +78,31 @@ class BookModel {
     );
   }
 
-  
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'genre_id': genreId,
-        'slug': slug,
-        'title': title,
-        'author': author,
-        'image_url': imageUrl,
-        'description': description,
-        'publisher': publisher,
-        'isbn': isbn,
-        'price': price,
-        'format': format,
-        'source_url': sourceUrl,
-        'rating': rating,
-        'voters': voters,
-        'created_at': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
-      };
+    'id': id,
+    'genre_id': genreId,
+    'slug': slug,
+    'title': title,
+    'author': author,
+    'image_url': imageUrl,
+    'description': description,
+    'publisher': publisher,
+    'isbn': isbn,
+    'price': price,
+    'format': format,
+    'source_url': sourceUrl,
+    'rating': rating,
+    'voters': voters,
+    'created_at': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
+  };
 }
 
 class BookRef {
-  static CollectionReference<BookModel> col(FirebaseFirestore db) =>
-      db.collection('books').withConverter<BookModel>(
-            fromFirestore: (snap, _) => BookModel.fromMap(snap.data() ?? {}, snap.id),
-            toFirestore: (b, _) => b.toMap(),
-          );
+  static CollectionReference<BookModel> col(FirebaseFirestore db) => db
+      .collection('books')
+      .withConverter<BookModel>(
+        fromFirestore: (snap, _) =>
+            BookModel.fromMap(snap.data() ?? {}, snap.id),
+        toFirestore: (b, _) => b.toMap(),
+      );
 }

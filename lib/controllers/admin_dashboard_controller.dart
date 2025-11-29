@@ -33,9 +33,15 @@ class AdminDashboardController extends ChangeNotifier {
   void _fetchData() {
     _firestoreService.getAllOrders().listen((orders) {
       _totalOrders = orders.length;
-      _packagingOrders = orders.where((order) => order.status == 'packaging').length;
-      _deliveryOrders = orders.where((order) => order.status == 'shipping').length;
-      _completedOrders = orders.where((order) => order.status == 'completed').length;
+      _packagingOrders = orders
+          .where((order) => order.status == 'packaging')
+          .length;
+      _deliveryOrders = orders
+          .where((order) => order.status == 'shipping')
+          .length;
+      _completedOrders = orders
+          .where((order) => order.status == 'completed')
+          .length;
 
       _pieChartData = [
         ChartData('Selesai', _completedOrders.toDouble(), Colors.green),

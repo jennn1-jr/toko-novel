@@ -132,7 +132,9 @@ class _AllBooksPageState extends State<AllBooksPage> {
           .where((b) => genreIdsToFilter.contains(b.genreId))
           .toList();
 
-      print('DEBUG: Fetched ${allFetched.length} total books, ${filtered.length} after genre filter');
+      print(
+        'DEBUG: Fetched ${allFetched.length} total books, ${filtered.length} after genre filter',
+      );
 
       // Apply search filter
       final searchFiltered = _applySearch(filtered);
@@ -480,7 +482,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
                                         ? Colors.white60
                                         : Colors.black54,
                                   ),
-                                  ),
+                                ),
                                 const SizedBox(height: 16),
                               ],
                             ),

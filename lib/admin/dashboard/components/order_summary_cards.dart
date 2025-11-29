@@ -73,7 +73,6 @@ class SummaryCardGridView extends StatelessWidget {
   }
 }
 
-
 class SummaryCard extends StatelessWidget {
   const SummaryCard({
     Key? key,
@@ -103,10 +102,7 @@ class SummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "$count",
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
+              Text("$count", style: Theme.of(context).textTheme.headlineMedium),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -117,11 +113,7 @@ class SummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          )
+          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
