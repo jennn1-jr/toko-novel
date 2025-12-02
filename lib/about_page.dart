@@ -98,10 +98,10 @@ class _AboutUsPageState extends State<AboutUsPage>
       ),
       TeamMember(
         name: 'Izora Elverda',
-        role: 'Backend Developer',
-        imageUrl: 'https://i.pravatar.cc/150?img=3',
-        instagram: '@yogaprtma',
-        github: 'yogaprtma',
+        role: 'Frontend Developer',
+        imageUrl: 'https://avatars.githubusercontent.com/u/208224160?v=4',
+        instagram: '@elverdaputri',
+        github: 'https://github.com/Elverda',
         description: 'Spesialis UI/UX dan Frontend',
       ),
       TeamMember(
