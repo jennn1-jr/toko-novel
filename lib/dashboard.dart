@@ -192,20 +192,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                     Image.asset(
+                          'assets/images/logo.png', // Pastikan nama file sesuai
+                          height: 200, // Atur tinggi logo sesuai keinginan
+                          width: 200, // Atur lebar logo
+                          fit: BoxFit.contain,
                         ),
-                        child: const Icon(
-                          Icons.menu_book,
-                          color: Colors.black,
-                          size: 28,
-                        ),
-                      ),
                       const SizedBox(width: 12),
                       ShaderMask(
                         shaderCallback: (bounds) => const LinearGradient(

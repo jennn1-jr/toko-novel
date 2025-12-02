@@ -131,14 +131,14 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-children: [
-  // LOGO GAMBAR
-  Image.asset(
-    'assets/images/logo.png',
-    height: 200, 
-    width: 200,
-    fit: BoxFit.contain,
-  ),
+                      children: [
+                        // LOGO GAMBAR
+                        Image.asset(
+                          'assets/images/logo.png',
+                          height: 200,
+                          width: 200,
+                          fit: BoxFit.contain,
+                        ),
                         const SizedBox(height: 30),
                         _buildTextField(
                           controller: _emailController,
@@ -174,10 +174,10 @@ children: [
                             onPressed: _isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFc19759),
-                              disabledBackgroundColor:
-                                  const Color(0xFFc19759).withOpacity(0.5),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 15),
+                              disabledBackgroundColor: const Color(
+                                0xFFc19759,
+                              ).withOpacity(0.5),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(100),
                               ),
@@ -291,8 +291,8 @@ children: [
           color: Colors.white70, // Warna label saat di dalam
           fontSize: 16,
         ),
-        // *** AKHIR PERUBAHAN ***
 
+        // *** AKHIR PERUBAHAN ***
         contentPadding: const EdgeInsets.symmetric(
           vertical: 15,
           horizontal: 20,
@@ -304,7 +304,8 @@ children: [
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
           borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.3)), // Border tipis
+            color: Colors.white.withOpacity(0.3),
+          ), // Border tipis
         ),
 
         // Border saat di-klik (fokus)
@@ -319,15 +320,17 @@ children: [
         // Border saat nonaktif
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
-          borderSide:
-              BorderSide(color: Colors.white.withOpacity(0.2)), // Border tipis
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.2),
+          ), // Border tipis
         ),
 
         // Fallback border
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
           borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.3)), // Border tipis
+            color: Colors.white.withOpacity(0.3),
+          ), // Border tipis
         ),
 
         suffixIcon: suffixIcon,
@@ -478,14 +481,14 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-children: [
-  // Ganti Icon dan Text dengan Image.asset
-  Image.asset(
-    'assets/images/logo.png', // Pastikan nama file sesuai
-    height: 200, // Atur tinggi logo sesuai keinginan
-    width: 200,  // Atur lebar logo
-    fit: BoxFit.contain,
-  ),
+                      children: [
+                        // Ganti Icon dan Text dengan Image.asset
+                        Image.asset(
+                          'assets/images/logo.png', // Pastikan nama file sesuai
+                          height: 200, // Atur tinggi logo sesuai keinginan
+                          width: 200, // Atur lebar logo
+                          fit: BoxFit.contain,
+                        ),
                         const SizedBox(height: 8),
                         const Text(
                           'Daftar Akun Baru',
@@ -552,10 +555,10 @@ children: [
                             onPressed: _isLoading ? null : _register,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFc19759),
-                              disabledBackgroundColor:
-                                  const Color(0xFFc19759).withOpacity(0.5),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 15),
+                              disabledBackgroundColor: const Color(
+                                0xFFc19759,
+                              ).withOpacity(0.5),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(100),
                               ),
@@ -663,8 +666,8 @@ children: [
           color: Colors.white70, // Warna label saat di dalam
           fontSize: 16,
         ),
-        // *** AKHIR PERUBAHAN ***
 
+        // *** AKHIR PERUBAHAN ***
         contentPadding: const EdgeInsets.symmetric(
           vertical: 15,
           horizontal: 20,
@@ -676,7 +679,8 @@ children: [
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
           borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.3)), // Border tipis
+            color: Colors.white.withOpacity(0.3),
+          ), // Border tipis
         ),
 
         // Border saat di-klik (fokus)
@@ -691,15 +695,17 @@ children: [
         // Border saat nonaktif
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
-          borderSide:
-              BorderSide(color: Colors.white.withOpacity(0.2)), // Border tipis
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.2),
+          ), // Border tipis
         ),
 
         // Fallback border
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(50),
           borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.3)), // Border tipis
+            color: Colors.white.withOpacity(0.3),
+          ), // Border tipis
         ),
 
         suffixIcon: suffixIcon,
@@ -707,4 +713,3 @@ children: [
     );
   }
 }
-
