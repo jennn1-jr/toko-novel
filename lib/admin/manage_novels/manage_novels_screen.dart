@@ -27,8 +27,6 @@ class ManageNovelsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const AdminHeader(title: "Kelola Novel"),
-            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -69,7 +67,7 @@ class ManageNovelsScreen extends StatelessWidget {
                     // Show confirmation dialog before deleting
                     showDialog(
                       context: context,
-                      builder: (BuildContext context) {
+                      builder: (BuildContext dialogContext) {
                         return AlertDialog(
                           title: const Text('Konfirmasi Hapus'),
                           content: const Text('Apakah Anda yakin ingin menghapus novel ini?'),
@@ -77,7 +75,7 @@ class ManageNovelsScreen extends StatelessWidget {
                             TextButton(
                               child: const Text('Batal'),
                               onPressed: () {
-                                Navigator.of(context).pop();
+                                Navigator.of(dialogContext).pop();
                               },
                             ),
                             TextButton(
@@ -85,12 +83,14 @@ class ManageNovelsScreen extends StatelessWidget {
                               onPressed: () async {
                                 try {
                                   await firestoreService.deleteBook(bookId);
-                                  Navigator.of(context).pop(); // Close confirmation dialog
+                                  Navigator.of(dialogContext).pop(); // Close confirmation dialog
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('Novel berhasil dihapus.'), backgroundColor: Colors.green),
                                   );
                                 } catch (e) {
-                                  Navigator.of(context).pop();
+                                  Navigator.of(dialogContext).pop();
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Gagal menghapus novel: $e'), backgroundColor: Colors.red),
                                   );
