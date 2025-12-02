@@ -107,10 +107,10 @@ class _AboutUsPageState extends State<AboutUsPage>
       TeamMember(
         name: 'Muhammad Dwi Saputri',
         role: 'Mobile Developer',
-        imageUrl: 'https://i.pravatar.cc/150?img=4',
-        instagram: '@farhankrn',
-        github: 'farhankrn',
-        description: 'KING AI',
+        imageUrl: 'https://avatars.githubusercontent.com/u/200634165?v=4',
+        instagram: '@aartup__',
+        github: 'https://github.com/POKSI77',
+        description: 'NEWBIE Flutter Developer',
       ),
       TeamMember(
         name: 'Muhammad Dzacky M.Y',

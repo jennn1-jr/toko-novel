@@ -194,17 +194,27 @@ class _AllBooksPageState extends State<AllBooksPage> {
             backgroundColor: isDark ? Colors.black : Colors.white,
             elevation: 0.5,
             titleSpacing: 0,
+            
+            // --- PERBAIKAN: Tombol Back Explicit ---
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              color: isDark ? Colors.white : Colors.black, // Warna menyesuaikan
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            // ---------------------------------------
+
             title: Row(
               children: [
-                const SizedBox(width: 16),
+                // Mengurangi jarak karena sudah ada leading button
+                const SizedBox(width: 4), 
                 Text(
                   _activeGenreId?.isNotEmpty == true
                       ? 'Semua Novel (Genre)'
                       : (widget.selectedCategorySlug == 'buku/semua'
-                            ? 'Semua Novel'
-                            : (widget.selectedCategorySlug == 'buku/komik'
-                                  ? 'Semua Light Novel'
-                                  : 'Semua Novel')),
+                          ? 'Semua Novel'
+                          : (widget.selectedCategorySlug == 'buku/komik'
+                              ? 'Semua Light Novel'
+                              : 'Semua Novel')),
                   style: TextStyle(
                     color: isDark ? Colors.white : Colors.black,
                     fontWeight: FontWeight.w700,
@@ -334,9 +344,6 @@ class _AllBooksPageState extends State<AllBooksPage> {
                               if (i >= filtered.length)
                                 return const SizedBox.shrink();
                               final b = filtered[i];
-                              print(
-                                'DEBUG AllBooksPage: Book="${b.title}", imageUrl="${b.imageUrl}"',
-                              );
                               final imageUrl = coverProxy(
                                 b.imageUrl,
                                 w: 480,
@@ -371,8 +378,8 @@ class _AllBooksPageState extends State<AllBooksPage> {
                                         child: ClipRRect(
                                           borderRadius:
                                               const BorderRadius.vertical(
-                                                top: Radius.circular(12),
-                                              ),
+                                            top: Radius.circular(12),
+                                          ),
                                           child: imageUrl.isEmpty
                                               ? Container(
                                                   color: Colors.grey[900],
@@ -388,36 +395,29 @@ class _AllBooksPageState extends State<AllBooksPage> {
                                                   fit: BoxFit.cover,
                                                   errorBuilder: (_, __, ___) =>
                                                       Container(
-                                                        color: Colors.grey[900],
-                                                        child: const Center(
-                                                          child: Icon(
-                                                            Icons.bookmark,
-                                                            color: Colors.grey,
-                                                          ),
+                                                    color: Colors.grey[900],
+                                                    child: const Center(
+                                                      child: Icon(
+                                                        Icons.bookmark,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  loadingBuilder:
+                                                      (context, child, loadingProgress) {
+                                                    if (loadingProgress == null) {
+                                                      return child;
+                                                    }
+                                                    return Container(
+                                                      color: Colors.grey[850],
+                                                      child: const Center(
+                                                        child: Icon(
+                                                          Icons.image,
+                                                          color: Colors.grey,
                                                         ),
                                                       ),
-                                                  loadingBuilder:
-                                                      (
-                                                        context,
-                                                        child,
-                                                        loadingProgress,
-                                                      ) {
-                                                        if (loadingProgress ==
-                                                            null) {
-                                                          return child;
-                                                        }
-                                                        return Container(
-                                                          color:
-                                                              Colors.grey[850],
-                                                          child: const Center(
-                                                            child: Icon(
-                                                              Icons.image,
-                                                              color:
-                                                                  Colors.grey,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
+                                                    );
+                                                  },
                                                 ),
                                         ),
                                       ),
@@ -460,11 +460,11 @@ class _AllBooksPageState extends State<AllBooksPage> {
                             }, childCount: _getFilteredItems().length),
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 5,
-                                  mainAxisSpacing: 16,
-                                  crossAxisSpacing: 16,
-                                  childAspectRatio: 0.62,
-                                ),
+                              crossAxisCount: 5,
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              childAspectRatio: 0.62,
+                            ),
                           ),
                         ),
 
@@ -609,5 +609,3 @@ class _ChipTag extends StatelessWidget {
     );
   }
 }
-
-// _BookTile removed - grid items are inline for better search filtering support
