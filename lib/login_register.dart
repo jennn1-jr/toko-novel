@@ -131,22 +131,14 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.menu_book,
-                          color: Colors.white,
-                          size: 50,
-                        ),
-                        const SizedBox(height: 15),
-                        const Text(
-                          'NOVELKU',
-                          style: TextStyle(
-                            fontSize: 48,
-                            color: Colors.white,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+children: [
+  // LOGO GAMBAR
+  Image.asset(
+    'assets/images/logo.png',
+    height: 200, 
+    width: 200,
+    fit: BoxFit.contain,
+  ),
                         const SizedBox(height: 30),
                         _buildTextField(
                           controller: _emailController,
@@ -486,22 +478,14 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.menu_book,
-                          color: Colors.white,
-                          size: 50,
-                        ),
-                        const SizedBox(height: 15),
-                        const Text(
-                          'NOVELKU',
-                          style: TextStyle(
-                            fontSize: 48,
-                            color: Colors.white,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+children: [
+  // Ganti Icon dan Text dengan Image.asset
+  Image.asset(
+    'assets/images/logo.png', // Pastikan nama file sesuai
+    height: 200, // Atur tinggi logo sesuai keinginan
+    width: 200,  // Atur lebar logo
+    fit: BoxFit.contain,
+  ),
                         const SizedBox(height: 8),
                         const Text(
                           'Daftar Akun Baru',

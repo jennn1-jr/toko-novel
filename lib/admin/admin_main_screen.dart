@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tokonovel/admin/admin_theme.dart';
 import 'package:tokonovel/admin/dashboard/admin_dashboard_screen.dart';
 import 'package:tokonovel/admin/manage_novels/manage_novels_screen.dart';
 import 'package:tokonovel/admin/manage_orders/manage_orders_screen.dart';
 import 'package:tokonovel/controllers/admin_menu_controller.dart';
 import 'components/side_menu.dart';
 import 'responsive.dart';
+import 'components/admin_header.dart'; // Import header baru
 
 class AdminMainScreen extends StatelessWidget {
   const AdminMainScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Terapkan tema kustom di sini
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: lightThemeData, // Tema terang
+      darkTheme: darkThemeData, // Tema gelap
+      themeMode: themeNotifier.value, // Gunakan notifier untuk mode tema
+      home: const AdminScaffold(),
+    );
+  }
+}
+
+class AdminScaffold extends StatelessWidget {
+  const AdminScaffold({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -19,15 +37,11 @@ class AdminMainScreen extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // We want this side menu only for large screen
             if (Responsive.isDesktop(context))
               const Expanded(
-                // default flex = 1
-                // and it takes 1/6 part of the screen
                 child: SideMenu(),
               ),
             const Expanded(
-              // It takes 5/6 part of the screen
               flex: 5,
               child: AdminContent(),
             ),
@@ -43,19 +57,38 @@ class AdminContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Watch for changes in the menu controller
     final selectedMenuItem = context.watch<AdminMenuController>().selectedItem;
+    String title = "Dashboard"; // Judul default
+    Widget content;
 
-    // Return the screen based on the selected item
     switch (selectedMenuItem) {
       case AdminMenuItem.dashboard:
-        return const AdminDashboardScreen();
+        title = "Dashboard";
+        content = const AdminDashboardScreen();
+        break;
       case AdminMenuItem.manageNovels:
-        return const ManageNovelsScreen();
+        title = "Kelola Novel";
+        content = const ManageNovelsScreen();
+        break;
       case AdminMenuItem.manageOrders:
-        return const ManageOrdersScreen();
+        title = "Kelola Pesanan";
+        content = const ManageOrdersScreen();
+        break;
       case AdminMenuItem.profile:
-        return const Center(child: Text("Halaman Profil Admin")); // Placeholder
+        title = "Profil Admin";
+        content = const Center(child: Text("Halaman Profil Admin", style: TextStyle(color: textColor)));
+        break;
     }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Column(
+        children: [
+          AdminHeader(title: title),
+          const SizedBox(height: defaultPadding),
+          content,
+        ],
+      ),
+    );
   }
 }

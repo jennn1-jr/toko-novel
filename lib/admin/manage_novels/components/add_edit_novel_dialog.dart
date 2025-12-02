@@ -13,8 +13,7 @@ class AddEditNovelDialog extends StatefulWidget {
 
 class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _firestoreService = FirestoreService();
-
+  final FirestoreService _firestoreService = FirestoreService();
 
   late TextEditingController _titleController;
   late TextEditingController _authorController;
@@ -33,7 +32,7 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
     _descController = TextEditingController(text: widget.book?.description ?? '');
     _priceController = TextEditingController(text: widget.book?.price?.toString() ?? '');
     _imageUrlController = TextEditingController(text: widget.book?.imageUrl ?? '');
-    _genreIdController = TextEditingController(text: widget.book?.genreId ?? ''); // Default genre
+    _genreIdController = TextEditingController(text: widget.book?.genreId ?? '');
     _isbnController = TextEditingController(text: widget.book?.isbn ?? '');
     _publisherController = TextEditingController(text: widget.book?.publisher ?? 'Kelompok 4');
   }
@@ -53,25 +52,30 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
 
   Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      final now = DateTime.now().toIso8601String();
-      final slug = "${_titleController.text.toLowerCase().replaceAll(' ', '-')}-$now";
+      // Generate slug only if adding a new book or if slug was not present
+      final String generatedSlug = _titleController.text
+          .toLowerCase()
+          .replaceAll(RegExp(r'\s+'), '-')
+          .replaceAll(RegExp(r'[^\w-]'), '');
 
       final bookData = BookModel(
-        id: widget.book?.id ?? '', // ID is empty for new book
+        id: widget.book?.id ?? '',
         title: _titleController.text,
         author: _authorController.text,
         description: _descController.text,
-        price: int.tryParse(_priceController.text) ?? 0,
+        price: int.tryParse(_priceController.text),
         imageUrl: _imageUrlController.text,
         genreId: _genreIdController.text,
-        slug: widget.book?.slug ?? slug,
-        // Fill other fields with default/empty values if needed
+        slug: widget.book?.slug ?? generatedSlug, // Use existing slug or generated one
         publisher: _publisherController.text,
         isbn: _isbnController.text,
+        
+        // Preserve existing fields not edited by the form
         format: widget.book?.format,
         sourceUrl: widget.book?.sourceUrl,
         rating: widget.book?.rating,
         voters: widget.book?.voters,
+        createdAt: widget.book?.createdAt,
       );
 
       try {
@@ -108,10 +112,10 @@ class _AddEditNovelDialogState extends State<AddEditNovelDialog> {
                 _buildTextFormField(controller: _descController, label: 'Deskripsi', maxLines: 3),
                 _buildTextFormField(controller: _priceController, label: 'Harga', isNumber: true),
                 _buildTextFormField(controller: _imageUrlController, label: 'URL Gambar'),
-          _buildTextFormField(controller: _genreIdController, label: 'Genre ID'),
-          _buildTextFormField(controller: _isbnController, label: 'ISBN'),
-          _buildTextFormField(controller: _publisherController, label: 'Penerbit'),
-        ],
+                _buildTextFormField(controller: _genreIdController, label: 'Genre ID'),
+                _buildTextFormField(controller: _isbnController, label: 'ISBN'),
+                _buildTextFormField(controller: _publisherController, label: 'Penerbit'),
+              ],
             ),
           ),
         ),

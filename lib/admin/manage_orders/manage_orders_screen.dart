@@ -1,259 +1,136 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tokonovel/services/firestore_service.dart';
+import 'package:tokonovel/admin/admin_theme.dart';
 import 'package:tokonovel/models/order_model.dart';
+import 'package:tokonovel/services/firestore_service.dart';
 
-class ManageOrdersScreen extends StatefulWidget {
+class ManageOrdersScreen extends StatelessWidget {
   const ManageOrdersScreen({Key? key}) : super(key: key);
 
   @override
-  State<ManageOrdersScreen> createState() => _ManageOrdersScreenState();
-}
-
-class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
-  final FirestoreService _firestoreService = FirestoreService();
-  
-  // Default filter: Tampilkan Semua
-  String _selectedFilter = 'Semua';
-
-  // Daftar Status untuk Dropdown (Update Data)
-  final List<String> _orderStatuses = [
-    'paid',
-    'packaging',
-    'shipping',
-    'completed',
-    'cancelled'
-  ];
-
-  // Daftar Kategori untuk Tab Filter (Atas)
-  final List<String> _filterOptions = [
-    'Semua',
-    'paid',
-    'packaging',
-    'shipping',
-    'completed',
-    'cancelled'
-  ];
-
-  @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        primary: false,
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Kelola Pesanan",
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 20.0),
+    final FirestoreService firestoreService = FirestoreService();
 
-            // --- 1. BAGIAN FILTER KATEGORI (BARU) ---
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _filterOptions.map((status) {
-                  final bool isSelected = _selectedFilter == status;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(
-                        _getDisplayStatus(status), // Nama yang user-friendly
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      selected: isSelected,
-                      selectedColor: _getStatusColor(status), // Warna sesuai status
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: isSelected ? Colors.transparent : Colors.grey.shade300,
-                        ),
-                      ),
-                      onSelected: (bool selected) {
-                        if (selected) {
-                          setState(() {
-                            _selectedFilter = status;
-                          });
-                        }
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            
-            const SizedBox(height: 16.0),
+    return Container(
+      padding: const EdgeInsets.all(defaultPadding),
+      decoration: BoxDecoration(
+        color: secondaryColor,
+        borderRadius: BorderRadius.circular(defaultBorderRadius),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Semua Pesanan",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: defaultPadding),
+          StreamBuilder<List<OrderModel>>(
+            stream: firestoreService.getAllOrders(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: accentColor));
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: dangerColor)));
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text("Belum ada pesanan.", style: TextStyle(color: textColorMuted)));
+              }
 
-            // --- 2. TABEL DATA ---
-            StreamBuilder<List<OrderModel>>(
-              stream: _firestoreService.getAllOrders(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('Tidak ada pesanan.'));
-                }
-
-                final allOrders = snapshot.data!;
-
-                // --- LOGIKA FILTER DATA ---
-                // Jika pilih 'Semua', tampilkan semua. Jika tidak, filter berdasarkan status.
-                // Khusus untuk filter 'shipping', kita gabungkan dengan 'delivered' agar muncul di tab yang sama
-                final filteredOrders = allOrders.where((order) {
-                  if (_selectedFilter == 'Semua') return true;
-                  if (_selectedFilter == 'shipping') {
-                    return order.status == 'shipping' || order.status == 'delivered';
-                  }
-                  return order.status == _selectedFilter;
-                }).toList();
-
-                if (filteredOrders.isEmpty) {
-                  return Container(
-                    height: 200,
-                    alignment: Alignment.center,
-                    child: Text("Tidak ada pesanan dengan status '${_getDisplayStatus(_selectedFilter)}'"),
-                  );
-                }
-
-                return Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        horizontalMargin: 12,
-                        columnSpacing: 20.0,
-                        columns: const [
-                          DataColumn(label: Text('ID', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Tanggal', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Alamat', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
-                        ],
-                        rows: List.generate(
-                          filteredOrders.length,
-                          (index) => orderDataRow(filteredOrders[index]),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+              final orders = snapshot.data!;
+              return SizedBox(
+                width: double.infinity,
+                child: DataTable(
+                  columnSpacing: defaultPadding,
+                  columns: const [
+                    DataColumn(label: Text("Order ID", style: TextStyle(color: textColorMuted))),
+                    DataColumn(label: Text("Tanggal", style: TextStyle(color: textColorMuted))),
+                    DataColumn(label: Text("Total", style: TextStyle(color: textColorMuted))),
+                    DataColumn(label: Text("Status", style: TextStyle(color: textColorMuted))),
+                    DataColumn(label: Text("Aksi", style: TextStyle(color: textColorMuted))),
+                  ],
+                  rows: orders.map((order) => _buildOrderRow(context, order, firestoreService)).toList(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 
-  DataRow orderDataRow(OrderModel order) {
-    String formatRupiah(double amount) {
-      return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount);
-    }
-
-    String currentStatus = _orderStatuses.contains(order.status) ? order.status : 'paid';
-
+  DataRow _buildOrderRow(BuildContext context, OrderModel order, FirestoreService service) {
     return DataRow(
       cells: [
-        DataCell(Text(
-          (order.id ?? 'N/A').substring(0, 6).toUpperCase(), 
-          style: const TextStyle(fontWeight: FontWeight.w500)
-        )),
-        DataCell(Text(DateFormat('dd/MM HH:mm').format(order.orderDate))),
-        DataCell(Text(
-          formatRupiah(order.totalAmount),
-          style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
-        )),
-        DataCell(SizedBox(
-          width: 120,
-          child: Text(
-            order.shippingAddress,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 2,
-            style: const TextStyle(fontSize: 12),
-          ),
-        )),
-        DataCell(Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: _getStatusColor(currentStatus).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _getStatusColor(currentStatus)),
-          ),
-          child: Text(
-            currentStatus.toUpperCase(),
-            style: TextStyle(color: _getStatusColor(currentStatus), fontWeight: FontWeight.bold, fontSize: 10),
-          ),
-        )),
+        DataCell(Text(order.id?.substring(0, 8) ?? '(no id)', style: const TextStyle(color: textColor))),
+        DataCell(Text(DateFormat('dd MMM yyyy').format(order.orderDate), style: const TextStyle(color: textColorMuted))),
+        DataCell(Text("Rp${NumberFormat('#,##0').format(order.totalAmount)}", style: const TextStyle(color: textColor, fontWeight: FontWeight.w600))),
+        DataCell(_buildStatusChip(order.status)),
         DataCell(
-          DropdownButton<String>(
-            value: currentStatus,
-            underline: const SizedBox(),
-            icon: const Icon(Icons.edit, size: 16, color: Colors.grey),
-            style: const TextStyle(color: Colors.black, fontSize: 13),
-            onChanged: (String? newValue) {
-              if (newValue != null && order.id != null) {
-                _firestoreService.updateOrderStatus(order.id!, newValue);
+          PopupMenuButton<String>(
+            onSelected: (String newStatus) {
+              if (order.id != null) {
+                service.updateOrderStatus(order.id!, newStatus);
               }
             },
-            items: _orderStatuses.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value.toUpperCase()),
-              );
-            }).toList(),
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              _buildPopupMenuItem("packaging", "Kemas Pesanan", Icons.inventory_2),
+              _buildPopupMenuItem("shipping", "Kirim Pesanan", Icons.local_shipping),
+              _buildPopupMenuItem("completed", "Selesaikan Pesanan", Icons.check_circle),
+              _buildPopupMenuItem("cancelled", "Batalkan Pesanan", Icons.cancel),
+            ],
+            icon: const Icon(Icons.more_vert, color: textColorMuted),
+            color: primaryColor,
           ),
         ),
       ],
     );
   }
 
-  // Helper: Nama Status yang enak dibaca
-String _getDisplayStatus(String status) {
-    switch (status) {
-      case 'Semua': return 'Semua';
-      case 'paid': return 'Dibayar';
-      case 'packaging': return 'Dikemas';
-      case 'shipping': return 'Dikirim';
-      case 'completed': return 'Selesai';
-      case 'cancelled': return 'Batal';
-      default: return status;
-    }
+  PopupMenuItem<String> _buildPopupMenuItem(String value, String text, IconData icon) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, color: _getStatusColor(value), size: 20),
+          const SizedBox(width: 10),
+          Text(text, style: const TextStyle(color: textColor)),
+        ],
+      ),
+    );
   }
 
-  // Helper: Warna Status
+  Widget _buildStatusChip(String status) {
+    final Color color = _getStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+      ),
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'Semua': return Colors.grey[800]!;
-      case 'paid': return Colors.blue;
-      case 'packaging': return Colors.orange;
-      case 'shipping': return Colors.purple;
-      case 'completed': return Colors.green;
-      case 'cancelled': return Colors.red;
-      default: return Colors.grey;
+      case 'paid':
+        return warningColor;
+      case 'packaging':
+        return infoColor;
+      case 'shipping':
+        return accentColor;
+      case 'completed':
+        return successColor;
+      case 'cancelled':
+        return dangerColor;
+      default:
+        return Colors.grey;
     }
   }
 }

@@ -39,7 +39,6 @@ function toFirestoreDoc(novel) {
       contact_email: novel.publisher.contact_email,
     },
     inventory: {
-      stock: novel.inventory.stock,
       last_update: novel.inventory.last_update,
     },
     genres: novel.genres.map((g) => ({

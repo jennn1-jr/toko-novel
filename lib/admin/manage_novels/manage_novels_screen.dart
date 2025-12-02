@@ -2,7 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:tokonovel/models/book_model.dart';
 import 'package:tokonovel/services/firestore_service.dart';
-import '../dashboard/components/header.dart';
+import '../components/admin_header.dart';
 import 'components/add_edit_novel_dialog.dart';
 
 class ManageNovelsScreen extends StatelessWidget {
@@ -27,7 +27,7 @@ class ManageNovelsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Header(title: "Kelola Novel"),
+            const AdminHeader(title: "Kelola Novel"),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
