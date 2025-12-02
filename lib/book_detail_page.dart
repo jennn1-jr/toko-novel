@@ -454,8 +454,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                 color: isFavorite
                                     ? null
                                     : (isDarkMode
-                                          ? const Color(0xFF2A2A2A)
-                                          : const Color(0xFFF5F5F5)),
+                                        ? const Color(0xFF2A2A2A)
+                                        : const Color(0xFFF5F5F5)),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: const Color(
@@ -472,8 +472,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                   color: isFavorite
                                       ? Colors.black
                                       : (isDarkMode
-                                            ? Colors.white
-                                            : Colors.black),
+                                          ? Colors.white
+                                          : Colors.black),
                                 ),
                                 onPressed: () {
                                   if (isFavorite) {
@@ -572,37 +572,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                     ),
                                   ),
                                 ),
-                                Positioned(
-                                  top: 10,
-                                  left: 10,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Colors.red, Color(0xFFD32F2F)],
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.red.withOpacity(0.4),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Text(
-                                      '-20%',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                // --- BAGIAN DISKON DIHAPUS DARI SINI ---
                               ],
                             ),
                           ),
@@ -1021,20 +991,20 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                                               Colors.grey[300],
                                                           backgroundImage:
                                                               userPhotoBytes !=
-                                                                  null
-                                                              ? MemoryImage(
-                                                                  userPhotoBytes,
-                                                                )
-                                                              : null,
+                                                                      null
+                                                                  ? MemoryImage(
+                                                                      userPhotoBytes,
+                                                                    )
+                                                                  : null,
                                                           child:
                                                               userPhotoBytes ==
-                                                                  null
-                                                              ? const Icon(
-                                                                  Icons.person,
-                                                                  color: Colors
-                                                                      .grey,
-                                                                )
-                                                              : null,
+                                                                      null
+                                                                  ? const Icon(
+                                                                      Icons.person,
+                                                                      color: Colors
+                                                                          .grey,
+                                                                    )
+                                                                  : null,
                                                         ),
                                                         const SizedBox(
                                                           width: 12,
@@ -1059,8 +1029,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                                                               .bold,
                                                                       color:
                                                                           isDarkMode
-                                                                          ? Colors.white
-                                                                          : Colors.black,
+                                                                              ? Colors.white
+                                                                              : Colors.black,
                                                                     ),
                                                                   ),
                                                                   Text(
@@ -1087,9 +1057,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                                                     starIndex <
                                                                             review.rating
                                                                         ? Icons
-                                                                              .star
+                                                                            .star
                                                                         : Icons
-                                                                              .star_border,
+                                                                            .star_border,
                                                                     size: 14,
                                                                     color: Colors
                                                                         .amber,
@@ -1105,14 +1075,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                                                         .isEmpty
                                                                     ? "Tidak ada komentar."
                                                                     : review
-                                                                          .comment,
+                                                                        .comment,
                                                                 style: TextStyle(
                                                                   color:
                                                                       isDarkMode
-                                                                      ? Colors
-                                                                            .grey[300]
-                                                                      : Colors
-                                                                            .black87,
+                                                                          ? Colors
+                                                                              .grey[300]
+                                                                          : Colors
+                                                                              .black87,
                                                                 ),
                                                               ),
                                                             ],
