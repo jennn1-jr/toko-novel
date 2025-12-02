@@ -115,9 +115,9 @@ class _AboutUsPageState extends State<AboutUsPage>
       TeamMember(
         name: 'Muhammad Dzacky M.Y',
         role: 'Quality Assurance',
-        imageUrl: 'https://i.pravatar.cc/150?img=5',
-        instagram: '@naniksuciati',
-        github: 'naniksuciati',
+        imageUrl: 'https://avatars.githubusercontent.com/u/207881192?v=4',
+        instagram: '@mflofeee',
+        github: 'https://github.com/LofeYN',
         description: 'Memastikan kualitas produk',
       ),
     ];
