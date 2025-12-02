@@ -9,7 +9,6 @@ import 'package:tokonovel/collection_page.dart';
 import 'package:tokonovel/profile_page.dart';
 import 'package:tokonovel/theme.dart';
 import 'package:tokonovel/all_book_page.dart';
-import 'package:tokonovel/debug_firestore_page.dart';
 import 'package:tokonovel/models/book_model.dart';
 import 'dart:convert';
 import 'package:tokonovel/models/user_models.dart';
@@ -57,7 +56,7 @@ class _DashboardPageState extends State<DashboardPage> {
     _displayedBookStream = getPopularBooksStream();
 
     _startAutoScroll();
-    
+
     // Listener untuk mendeteksi ketikan pencarian
     _searchController.addListener(_onSearchChanged);
   }
@@ -65,28 +64,28 @@ class _DashboardPageState extends State<DashboardPage> {
   // [MODIFIKASI] Logika untuk menukar stream berdasarkan pencarian
   void _onSearchChanged() {
     final query = _searchController.text.trim().toLowerCase();
-    
+
     // Cek apakah query berubah drastis (misal dari kosong ke ada isi, atau sebaliknya)
     // untuk menghindari rebuild stream berlebihan jika tidak perlu
     if (query.isNotEmpty && _searchQuery.isEmpty) {
-       // User mulai mengetik -> Switch ke Semua Buku
-       setState(() {
-         _searchQuery = query;
-         _sectionTitle = "Hasil Pencarian";
-         _displayedBookStream = _firestoreService.getAllBooks(); 
-       });
+      // User mulai mengetik -> Switch ke Semua Buku
+      setState(() {
+        _searchQuery = query;
+        _sectionTitle = "Hasil Pencarian";
+        _displayedBookStream = _firestoreService.getAllBooks();
+      });
     } else if (query.isEmpty && _searchQuery.isNotEmpty) {
-       // User menghapus search -> Balik ke Best Seller
-       setState(() {
-         _searchQuery = query;
-         _sectionTitle = "Novel Best Seller";
-         _displayedBookStream = getPopularBooksStream();
-       });
+      // User menghapus search -> Balik ke Best Seller
+      setState(() {
+        _searchQuery = query;
+        _sectionTitle = "Novel Best Seller";
+        _displayedBookStream = getPopularBooksStream();
+      });
     } else {
-       // Hanya update query text untuk filtering
-       setState(() {
-         _searchQuery = query;
-       });
+      // Hanya update query text untuk filtering
+      setState(() {
+        _searchQuery = query;
+      });
     }
   }
 
@@ -104,10 +103,10 @@ class _DashboardPageState extends State<DashboardPage> {
         .where('slug', whereIn: slugs)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return BookModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return BookModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   void _startAutoScroll() {
@@ -192,12 +191,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   child: Row(
                     children: [
-                     Image.asset(
-                          'assets/images/logo.png', // Pastikan nama file sesuai
-                          height: 200, // Atur tinggi logo sesuai keinginan
-                          width: 200, // Atur lebar logo
-                          fit: BoxFit.contain,
-                        ),
+                      Image.asset(
+                        'assets/images/logo.png', // Pastikan nama file sesuai
+                        height: 200, // Atur tinggi logo sesuai keinginan
+                        width: 200, // Atur lebar logo
+                        fit: BoxFit.contain,
+                      ),
                       const SizedBox(width: 12),
                       ShaderMask(
                         shaderCallback: (bounds) => const LinearGradient(
@@ -302,7 +301,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const ProfilePage()),
+                                MaterialPageRoute(
+                                  builder: (context) => const ProfilePage(),
+                                ),
                               );
                             },
                             child: Container(
@@ -377,38 +378,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               : const Color(0xFFF5F5F5),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFD4AF37).withAlpha(
-                              (0.3 * 255).round(),
-                            ),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.bug_report,
-                            color: Color(0xFFD4AF37),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const DebugFirestorePage(),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF2A2A2A)
-                              : const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFD4AF37).withAlpha(
-                              (0.3 * 255).round(),
-                            ),
+                            color: const Color(
+                              0xFFD4AF37,
+                            ).withAlpha((0.3 * 255).round()),
                             width: 1.5,
                           ),
                         ),
@@ -467,9 +439,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withAlpha(
-                          (0.1 * 255).round(),
-                        ),
+                        color: const Color(
+                          0xFFD4AF37,
+                        ).withAlpha((0.1 * 255).round()),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -518,9 +490,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withAlpha(
-                                (0.4 * 255).round(),
-                              ),
+                              color: const Color(
+                                0xFFD4AF37,
+                              ).withAlpha((0.4 * 255).round()),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -628,9 +600,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     height: 500,
                     child: StreamBuilder<List<BookModel>>(
                       // [MODIFIKASI] Gunakan stream dinamis (Popular atau All)
-                      stream: _displayedBookStream, 
+                      stream: _displayedBookStream,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Center(
                             child: CircularProgressIndicator(
                               color: Color(0xFFD4AF37),
@@ -658,11 +631,11 @@ class _DashboardPageState extends State<DashboardPage> {
                             ? allBooks
                             : allBooks.where((book) {
                                 return book.title.toLowerCase().contains(
-                                          _searchQuery,
-                                        ) ||
+                                      _searchQuery,
+                                    ) ||
                                     book.author.toLowerCase().contains(
-                                          _searchQuery,
-                                        );
+                                      _searchQuery,
+                                    );
                               }).toList();
 
                         if (filteredBooks.isEmpty) {
@@ -679,26 +652,28 @@ class _DashboardPageState extends State<DashboardPage> {
                           );
                         }
 
-// Tentukan apakah sedang mode cari
+                        // Tentukan apakah sedang mode cari
                         final bool isSearching = _searchQuery.isNotEmpty;
 
                         return PageView.builder(
                           controller: _pageController,
-                          
+
                           // [PERBAIKAN UTAMA]
                           // Jika sedang mencari, batasi jumlah item sesuai hasil (jangan infinite/null)
                           // Jika tidak mencari (mode Best Seller), biarkan null (infinite scroll)
                           itemCount: isSearching ? filteredBooks.length : null,
-                          
+
                           onPageChanged: (index) {
                             // Update index hanya jika perlu
                           },
-                          
+
                           itemBuilder: (context, index) {
                             // [PERBAIKAN UTAMA]
                             // Jika searching, ambil index langsung (0, 1, 2...)
                             // Jika infinite, gunakan modulo (%) agar berulang
-                            final bookIndex = isSearching ? index : index % filteredBooks.length;
+                            final bookIndex = isSearching
+                                ? index
+                                : index % filteredBooks.length;
                             final book = filteredBooks[bookIndex];
 
                             return AnimatedBuilder(
@@ -810,9 +785,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF1B5E20).withAlpha(
-                            (0.4 * 255).round(),
-                          ),
+                          color: const Color(
+                            0xFF1B5E20,
+                          ).withAlpha((0.4 * 255).round()),
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -823,9 +798,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(
-                              (0.2 * 255).round(),
-                            ),
+                            color: Colors.white.withAlpha((0.2 * 255).round()),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -881,9 +854,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFD4AF37).withAlpha(
-                                  (0.5 * 255).round(),
-                                ),
+                                color: const Color(
+                                  0xFFD4AF37,
+                                ).withAlpha((0.5 * 255).round()),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -1067,9 +1040,7 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(
-                              (0.3 * 255).round(),
-                            ),
+                            color: Colors.black.withAlpha((0.3 * 255).round()),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -1148,9 +1119,9 @@ class BookCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD4AF37).withAlpha(
-                              (0.4 * 255).round(),
-                            ),
+                            color: const Color(
+                              0xFFD4AF37,
+                            ).withAlpha((0.4 * 255).round()),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -1217,11 +1188,11 @@ class Category {
 String _getCategorySlug(String categoryName) {
   switch (categoryName) {
     case 'All':
-      return 'buku/semua'; 
+      return 'buku/semua';
     case 'Romance':
       return 'buku/romance';
     case 'Fiction':
-      return 'buku/fiksi-sastra'; 
+      return 'buku/fiksi-sastra';
     case 'Crime':
       return 'buku/crime';
     case 'Science':
@@ -1309,7 +1280,9 @@ class CategoryCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD4AF37).withAlpha((0.3 * 255).round()),
+                      color: const Color(
+                        0xFFD4AF37,
+                      ).withAlpha((0.3 * 255).round()),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

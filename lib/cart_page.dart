@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,7 +9,6 @@ import 'package:tokonovel/checkout_page.dart';
 import 'package:tokonovel/utils/image_proxy.dart';
 import 'package:tokonovel/services/firestore_service.dart';
 import 'package:tokonovel/models/book_model.dart';
-import 'package:tokonovel/models/order_model.dart';
 import 'package:tokonovel/models/user_models.dart';
 import 'package:tokonovel/theme.dart';
 
