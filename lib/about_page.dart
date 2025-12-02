@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 // 1. TAMBAHKAN IMPOR THEME ANDA
 // Sesuaikan path-nya jika perlu, misalnya 'package:tokonovel/theme.dart'
-import 'theme.dart'; 
+import 'theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -80,7 +80,7 @@ class _AboutUsPageState extends State<AboutUsPage>
   @override
   Widget build(BuildContext context) {
     final List<TeamMember> teamMembers = [
-       TeamMember(
+      TeamMember(
         name: 'Jenar Aditiya Bagaskara',
         role: 'Team Leader',
         imageUrl: 'https://avatars.githubusercontent.com/u/200600912?v=4',
@@ -229,7 +229,7 @@ class _AboutUsPageState extends State<AboutUsPage>
                                 final member = entry.value;
                                 return TweenAnimationBuilder<double>(
                                   duration:
-                                      Duration(milliseconds: 500 + (index * 100)),
+                                  Duration(milliseconds: 500 + (index * 100)),
                                   tween: Tween(begin: 0.0, end: 1.0),
                                   curve: Curves.easeOutBack,
                                   builder: (context, value, child) {
@@ -241,8 +241,8 @@ class _AboutUsPageState extends State<AboutUsPage>
                                           width: constraints.maxWidth > 800
                                               ? (constraints.maxWidth - 60) / 3
                                               : constraints.maxWidth > 500
-                                                  ? (constraints.maxWidth - 40) / 2
-                                                  : constraints.maxWidth,
+                                              ? (constraints.maxWidth - 40) / 2
+                                              : constraints.maxWidth,
                                           // 5. KIRIM STATUS isDarkMode KE WIDGET BAWAHAN
                                           child: TeamMemberCard(
                                             member: member,
@@ -510,21 +510,21 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
               // 9. GANTI WARNA STATIS MENJADI DINAMIS
               colors: _isHovered
                   ? [
-                      widget.isDarkMode
-                          ? const Color(0xFF2A2A2A)
-                          : Colors.grey[100]!,
-                      widget.isDarkMode
-                          ? const Color(0xFF1F1F1F)
-                          : Colors.grey[50]!,
-                    ]
+                widget.isDarkMode
+                    ? const Color(0xFF2A2A2A)
+                    : Colors.grey[100]!,
+                widget.isDarkMode
+                    ? const Color(0xFF1F1F1F)
+                    : Colors.grey[50]!,
+              ]
                   : [
-                      widget.isDarkMode
-                          ? const Color(0xFF1F1F1F)
-                          : Colors.white,
-                      widget.isDarkMode
-                          ? const Color(0xFF1A1A1A)
-                          : Colors.white70,
-                    ],
+                widget.isDarkMode
+                    ? const Color(0xFF1F1F1F)
+                    : Colors.white,
+                widget.isDarkMode
+                    ? const Color(0xFF1A1A1A)
+                    : Colors.white70,
+              ],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
@@ -532,8 +532,8 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
               color: _isHovered
                   ? Colors.amber.withOpacity(0.5)
                   : widget.isDarkMode
-                      ? Colors.grey.withOpacity(0.2)
-                      : Colors.grey.withOpacity(0.4),
+                  ? Colors.grey.withOpacity(0.2)
+                  : Colors.grey.withOpacity(0.4),
               width: _isHovered ? 2 : 1,
             ),
             boxShadow: [
@@ -542,8 +542,8 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                 color: _isHovered
                     ? Colors.amber.withOpacity(0.2)
                     : widget.isDarkMode
-                        ? Colors.black.withOpacity(0.3)
-                        : Colors.grey.withOpacity(0.2),
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.grey.withOpacity(0.2),
                 blurRadius: _isHovered ? 20 : 10,
                 offset: Offset(0, _isHovered ? 8 : 4),
               ),
@@ -656,9 +656,9 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                   colors: _isHovered
                       ? [Colors.amber, Colors.orange]
                       : [
-                          widget.isDarkMode ? Colors.white : Colors.black87,
-                          widget.isDarkMode ? Colors.white : Colors.black87
-                        ],
+                    widget.isDarkMode ? Colors.white : Colors.black87,
+                    widget.isDarkMode ? Colors.white : Colors.black87
+                  ],
                 ).createShader(bounds),
                 child: Text(
                   widget.member.name,
@@ -677,7 +677,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
               // Role Badge
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -709,7 +709,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                     fontSize: 12,
                     // 9. GANTI WARNA STATIS MENJADI DINAMIS
                     color:
-                        widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -728,7 +728,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                     color: Colors.pink,
                     onTap: () {
                       String username =
-                          widget.member.instagram.replaceAll('@', '');
+                      widget.member.instagram.replaceAll('@', '');
                       _launchSocialUrl('instagram.com/$username');
                     },
                   ),
@@ -787,3 +787,4 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
     );
   }
 }
+

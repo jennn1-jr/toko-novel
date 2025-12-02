@@ -135,8 +135,8 @@ class _LoginPageState extends State<LoginPage> {
                         // LOGO GAMBAR
                         Image.asset(
                           'assets/images/logo.png',
-                          height: 200,
-                          width: 200,
+                          height: 300,
+                          width: 300,
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 30),
@@ -161,10 +161,10 @@ class _LoginPageState extends State<LoginPage> {
                             onPressed: _isLoading
                                 ? null
                                 : () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -184,23 +184,23 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             child: _isLoading
                                 ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                      strokeWidth: 2,
-                                    ),
-                                  )
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 2,
+                              ),
+                            )
                                 : const Text(
-                                    'Log In',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 19.2,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                              'Log In',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 19.2,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -218,14 +218,14 @@ class _LoginPageState extends State<LoginPage> {
                               onTap: _isLoading
                                   ? null
                                   : () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const RegisterPageAuth(),
-                                        ),
-                                      );
-                                    },
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                    const RegisterPageAuth(),
+                                  ),
+                                );
+                              },
                               child: const Text(
                                 'Daftar',
                                 style: TextStyle(
@@ -485,8 +485,8 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                         // Ganti Icon dan Text dengan Image.asset
                         Image.asset(
                           'assets/images/logo.png', // Pastikan nama file sesuai
-                          height: 200, // Atur tinggi logo sesuai keinginan
-                          width: 200, // Atur lebar logo
+                          height: 300, // Atur tinggi logo sesuai keinginan
+                          width: 300, // Atur lebar logo
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 8),
@@ -520,10 +520,10 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                             onPressed: _isLoading
                                 ? null
                                 : () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -542,10 +542,10 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                             onPressed: _isLoading
                                 ? null
                                 : () {
-                                    setState(() {
-                                      _obscureConfirm = !_obscureConfirm;
-                                    });
-                                  },
+                              setState(() {
+                                _obscureConfirm = !_obscureConfirm;
+                              });
+                            },
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -565,23 +565,23 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                             ),
                             child: _isLoading
                                 ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                      strokeWidth: 2,
-                                    ),
-                                  )
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 2,
+                              ),
+                            )
                                 : const Text(
-                                    'Daftar',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 19.2,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                              'Daftar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 19.2,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -599,8 +599,8 @@ class _RegisterPageAuthState extends State<RegisterPageAuth> {
                               onTap: _isLoading
                                   ? null
                                   : () {
-                                      Navigator.pop(context);
-                                    },
+                                Navigator.pop(context);
+                              },
                               child: const Text(
                                 'Log In',
                                 style: TextStyle(

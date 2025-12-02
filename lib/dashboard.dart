@@ -103,10 +103,10 @@ class _DashboardPageState extends State<DashboardPage> {
         .where('slug', whereIn: slugs)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return BookModel.fromMap(doc.data(), doc.id);
-          }).toList();
-        });
+      return snapshot.docs.map((doc) {
+        return BookModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
   }
 
   void _startAutoScroll() {
@@ -347,10 +347,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                       child: (photoBytes != null)
                                           ? null
                                           : const Icon(
-                                              Icons.person,
-                                              color: Color(0xFFD4AF37),
-                                              size: 18,
-                                            ),
+                                        Icons.person,
+                                        color: Color(0xFFD4AF37),
+                                        size: 18,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -420,15 +420,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       end: Alignment.bottomRight,
                       colors: isDarkMode
                           ? [
-                              const Color(0xFF1A1A1A),
-                              const Color(0xFF2A2A2A),
-                              const Color(0xFF1A1A1A),
-                            ]
+                        const Color(0xFF1A1A1A),
+                        const Color(0xFF2A2A2A),
+                        const Color(0xFF1A1A1A),
+                      ]
                           : [
-                              const Color(0xFFFAFAFA),
-                              const Color(0xFFFFFFFF),
-                              const Color(0xFFF5F5F5),
-                            ],
+                        const Color(0xFFFAFAFA),
+                        const Color(0xFFFFFFFF),
+                        const Color(0xFFF5F5F5),
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
@@ -630,13 +630,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         final filteredBooks = _searchQuery.isEmpty
                             ? allBooks
                             : allBooks.where((book) {
-                                return book.title.toLowerCase().contains(
-                                      _searchQuery,
-                                    ) ||
-                                    book.author.toLowerCase().contains(
-                                      _searchQuery,
-                                    );
-                              }).toList();
+                          return book.title.toLowerCase().contains(
+                            _searchQuery,
+                          ) ||
+                              book.author.toLowerCase().contains(
+                                _searchQuery,
+                              );
+                        }).toList();
 
                         if (filteredBooks.isEmpty) {
                           return Center(
@@ -708,6 +708,135 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                 ),
+              ),
+
+              // --- [TAMBAHAN] JUDUL UNTUK SEMUA NOVEL ---
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(40, 60, 40, 24),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'Jelajahi Semua Novel',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(
+                        Icons.explore,
+                        color: Color(0xFFD4AF37),
+                        size: 32,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // --- [TAMBAHAN] GRID UNTUK SEMUA NOVEL ---
+              StreamBuilder<List<BookModel>>(
+                stream: _firestoreService.getAllBooks(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40.0),
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFD4AF37),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Text(
+                            'Tidak ada novel yang tersedia.',
+                            style: TextStyle(
+                              color:
+                              isDarkMode ? Colors.white60 : Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final allBooks = snapshot.data!;
+                  final filteredBooks = _searchQuery.isEmpty
+                      ? allBooks
+                      : allBooks.where((book) {
+                    return book.title
+                        .toLowerCase()
+                        .contains(_searchQuery) ||
+                        book.author.toLowerCase().contains(_searchQuery);
+                  }).toList();
+
+                  if (filteredBooks.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Text(
+                            'Novel tidak ditemukan.',
+                            style: TextStyle(
+                              color:
+                              isDarkMode ? Colors.white60 : Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                          final book = filteredBooks[index];
+                          return BookGridItem(
+                            book: book,
+                            isDarkMode: isDarkMode,
+                          );
+                        },
+                        childCount: filteredBooks.length,
+                      ),
+                      gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 5, // Jumlah kolom
+                        mainAxisSpacing: 24,
+                        crossAxisSpacing: 24,
+                        childAspectRatio: 0.6,
+                      ),
+                    ),
+                  );
+                },
               ),
 
               SliverToBoxAdapter(
@@ -921,8 +1050,8 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-                  colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                )
+            colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+          )
               : null,
           borderRadius: BorderRadius.circular(20),
         ),
@@ -947,7 +1076,7 @@ class BookCard extends StatelessWidget {
   final bool isDarkMode;
 
   const BookCard({Key? key, required this.book, required this.isDarkMode})
-    : super(key: key);
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1171,6 +1300,116 @@ class BookCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- [TAMBAHAN] WIDGET UNTUK GRID ITEM BUKU ---
+class BookGridItem extends StatelessWidget {
+  final BookModel book;
+  final bool isDarkMode;
+
+  const BookGridItem({
+    Key? key,
+    required this.book,
+    required this.isDarkMode,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = coverProxy(book.imageUrl, w: 480, h: 720);
+    // [OPTIMASI] Bungkus dengan RepaintBoundary
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BookDetailPage(book: book),
+            ),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+            border: Border.all(
+              color: const Color(0xFFD4AF37).withAlpha((0.2 * 255).round()),
+            ),
+            // [OPTIMASI] Hapus BoxShadow yang berat
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: imageUrl.isEmpty
+                      ? Container(
+                    color: Colors.grey[900],
+                    child: const Center(
+                      child: Icon(Icons.bookmark, color: Colors.grey),
+                    ),
+                  )
+                      : Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    // [OPTIMASI] Tambahkan cache extent
+                    cacheWidth: 240,
+                    cacheHeight: 360,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey[900],
+                      child: const Center(
+                        child: Icon(Icons.bookmark, color: Colors.grey),
+                      ),
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: Colors.grey[850],
+                        child: const Center(
+                          child: Icon(Icons.image, color: Colors.grey),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      book.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      book.author,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
